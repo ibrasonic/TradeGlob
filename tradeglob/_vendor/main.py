@@ -71,7 +71,8 @@ class TvDatafeed:
                 self.token_date = contents["date"]
                 logger.debug("auth loaded")
 
-            self.chromedriver_path = contents["chromedriver_path"]
+            # Don't load old chromedriver path - always reinstall to match Chrome
+            # self.chromedriver_path = contents["chromedriver_path"]
 
         return token
 
@@ -80,12 +81,10 @@ class TvDatafeed:
             os.mkdir(self.path)
             self.__save_token(token=None)
 
-        if self.chromedriver_path is None:
-            # Auto-install/update chromedriver to match Chrome version
-            logger.info("Checking chromedriver version...")
-            self.__install_chromedriver()
-        else:
-            logger.info("Using specified chromedriver path")
+        # Always install/update chromedriver to match current Chrome version
+        # Ignore any cached path - always detect and use the compatible version
+        logger.info("Detecting Chrome version and installing compatible chromedriver...")
+        self.__install_chromedriver()
 
         if not os.path.exists(self.profile_dir):
             os.mkdir(self.profile_dir)
