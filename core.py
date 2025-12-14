@@ -20,7 +20,17 @@ import holidays
 
 # Import tvDatafeed
 try:
-    from tvDatafeed import TvDatafeedLive, TvDatafeed, Interval
+    from tvDatafeed import Interval
+    try:
+        # Try new version (2.x+) with TvDatafeedLive
+        from tvDatafeed import TvDatafeedLive
+    except ImportError:
+        # Fall back to old version (1.x) with just TvDatafeed
+        from tvDatafeed import TvDatafeed as TvDatafeedLive
+        logger.warning(
+            "Using old tvDatafeed version. For better features, upgrade with: "
+            "pip install --upgrade tvDatafeed"
+        )
 except ImportError:
     raise ImportError(
         "tvDatafeed not found. Install with: pip install tvDatafeed"
@@ -647,3 +657,81 @@ class TradeGlobFetcher:
             self.cache.invalidate(symbol, exchange)
         else:
             self.cache.clear()
+    
+    def export_data(
+        self,
+        df: pd.DataFrame,
+        filepath: str,
+        format: str = 'csv',
+        **kwargs
+    ) -> str:
+        """
+        Export DataFrame to various formats
+        
+        Args:
+            df: DataFrame to export
+            filepath: Output file path
+            format: Export format ('csv', 'excel', 'parquet', 'json', 'hdf5')
+            **kwargs: Additional format-specific arguments
+            
+        Returns:
+            Absolute path to created file
+            
+        Example:
+            >>> df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 100)
+            >>> fetcher.export_data(df, 'aapl_data.csv')
+            >>> fetcher.export_data(df, 'aapl_data.xlsx', format='excel')
+            >>> fetcher.export_data(df, 'aapl_data.parquet', format='parquet')
+        """
+        from .utils.export import (
+            export_to_csv, export_to_excel, export_to_parquet,
+            export_to_json, export_to_hdf5
+        )
+        
+        format_lower = format.lower()
+        
+        if format_lower == 'csv':
+            return export_to_csv(df, filepath, **kwargs)
+        elif format_lower in ['excel', 'xlsx']:
+            return export_to_excel(df, filepath, **kwargs)
+        elif format_lower == 'parquet':
+            return export_to_parquet(df, filepath, **kwargs)
+        elif format_lower == 'json':
+            return export_to_json(df, filepath, **kwargs)
+        elif format_lower in ['hdf5', 'h5']:
+            return export_to_hdf5(df, filepath, **kwargs)
+        else:
+            raise ValidationError(
+                f"Unknown format: {format}. "
+                f"Supported: csv, excel, parquet, json, hdf5"
+            )
+    
+    def export_multi_format(
+        self,
+        df: pd.DataFrame,
+        base_path: str,
+        formats: List[str] = ['csv', 'parquet'],
+        **kwargs
+    ) -> Dict[str, str]:
+        """
+        Export DataFrame to multiple formats at once
+        
+        Args:
+            df: DataFrame to export
+            base_path: Base path (without extension)
+            formats: List of formats to export
+            **kwargs: Additional export arguments
+            
+        Returns:
+            Dict of {format: filepath}
+            
+        Example:
+            >>> df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 100)
+            >>> paths = fetcher.export_multi_format(
+            ...     df, 'aapl_data',
+            ...     formats=['csv', 'excel', 'parquet']
+            ... )
+            >>> # Creates: aapl_data.csv, aapl_data.xlsx, aapl_data.parquet
+        """
+        from .utils.export import export_multi_format
+        return export_multi_format(df, base_path, formats, **kwargs)

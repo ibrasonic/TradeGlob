@@ -32,8 +32,17 @@ TradeGlob provides seamless access to:
 
 ### Installation
 
+**From GitHub (recommended):**
 ```bash
+pip install git+https://github.com/ibrasonic/tradeglob.git
+```
+
+**From source:**
+```bash
+git clone https://github.com/ibrasonic/tradeglob.git
+cd tradeglob
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Basic Usage

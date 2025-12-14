@@ -28,6 +28,15 @@ wheels/
 *.manifest
 *.spec
 
+# TradeGlob specific
+.cache/
+output_*.csv
+output_*.xlsx
+output_*.json
+output_*.parquet
+output_*.h5
+output_*.hdf5
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

@@ -9,12 +9,12 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 setup(
     name="tradeglob",
     version="1.0.0",
-    author="TradeGlob Team",
-    author_email="contact@tradeglob.io",
+    author="Ibrahim Badawy",
+    author_email="ibrahim.m.badawy@gmail.com",
     description="Universal Market Data Fetcher - Access 3.5+ million instruments from global exchanges",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/tradeglob",
+    url="https://github.com/ibrasonic/tradeglob",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -35,8 +35,8 @@ setup(
     install_requires=requirements,
     keywords="trading, stocks, forex, crypto, market data, tradingview, technical analysis, finance, EGX, NASDAQ",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/tradeglob/issues",
-        "Source": "https://github.com/yourusername/tradeglob",
-        "Documentation": "https://github.com/yourusername/tradeglob/blob/main/README.md",
+        "Bug Reports": "https://github.com/ibrasonic/tradeglob/issues",
+        "Source": "https://github.com/ibrasonic/tradeglob",
+        "Documentation": "https://github.com/ibrasonic/tradeglob/blob/main/README.md",
     },
 )

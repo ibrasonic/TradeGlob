@@ -8,6 +8,14 @@ from .exceptions import (
     NoDataError,
     ValidationError
 )
+from .export import (
+    export_to_csv,
+    export_to_excel,
+    export_to_parquet,
+    export_to_json,
+    export_to_hdf5,
+    export_multi_format
+)
 
 __all__ = [
     'DataCache',
@@ -16,5 +24,11 @@ __all__ = [
     'TradeGlobError',
     'ConnectionError',
     'NoDataError',
-    'ValidationError'
+    'ValidationError',
+    'export_to_csv',
+    'export_to_excel',
+    'export_to_parquet',
+    'export_to_json',
+    'export_to_hdf5',
+    'export_multi_format'
 ]

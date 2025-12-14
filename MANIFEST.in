@@ -1,0 +1,11 @@
+include README.md
+include LICENSE
+include requirements.txt
+include PROJECT_STRUCTURE.md
+include IMPLEMENTATION_SUMMARY.md
+recursive-include tradeglob *.py
+recursive-include examples *.py
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .cache
+prune .cache
