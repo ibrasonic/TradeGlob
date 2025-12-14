@@ -79,14 +79,9 @@ class TvDatafeed:
         if not os.path.exists(self.path):
             os.mkdir(self.path)
             if self.chromedriver_path is None:
-                if (
-                    input(
-                        "\n\ndo you want to install chromedriver automatically?? y/n\t"
-                    ).lower()
-                    == "y"
-                ):
-                    self.__install_chromedriver()
-
+                # Auto-install chromedriver without prompting
+                logger.info("Auto-installing chromedriver...")
+                self.__install_chromedriver()
             else:
                 self.__save_token(token=None)
                 logger.info(
@@ -98,11 +93,14 @@ class TvDatafeed:
             logger.debug("created chrome user dir")
 
     def __install_chromedriver(self):
+        try:
+            import chromedriver_autoinstaller
+        except ImportError:
+            logger.info("Installing chromedriver-autoinstaller...")
+            os.system("pip install -q chromedriver-autoinstaller")
+            import chromedriver_autoinstaller
 
-        os.system("pip install chromedriver-autoinstaller")
-
-        import chromedriver_autoinstaller
-
+        logger.info("Downloading chromedriver...")
         path = chromedriver_autoinstaller.install(cwd=True)
 
         if path is not None:
