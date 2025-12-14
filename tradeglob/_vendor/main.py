@@ -100,13 +100,17 @@ class TvDatafeed:
             import chromedriver_autoinstaller
 
         # Clear chromedriver-autoinstaller cache to force fresh download
-        cache_dir = os.path.join(os.path.expanduser("~"), ".wdm", "drivers", "chromedriver")
-        if os.path.exists(cache_dir):
-            try:
-                shutil.rmtree(cache_dir)
-                logger.debug("Cleared chromedriver cache")
-            except:
-                pass
+        cache_dirs = [
+            os.path.join(os.path.expanduser("~"), ".wdm", "drivers", "chromedriver"),
+            os.path.join(os.path.expanduser("~"), ".cache", "selenium", "chromedriver")
+        ]
+        for cache_dir in cache_dirs:
+            if os.path.exists(cache_dir):
+                try:
+                    shutil.rmtree(cache_dir)
+                    logger.debug(f"Cleared chromedriver cache: {cache_dir}")
+                except:
+                    pass
 
         # Clear old cached chromedriver in .tv_datafeed
         cached_driver = os.path.join(self.path, "chromedriver.exe" if os.name == "nt" else "chromedriver")
