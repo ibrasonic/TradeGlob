@@ -78,15 +78,14 @@ class TvDatafeed:
     def __assert_dir(self):
         if not os.path.exists(self.path):
             os.mkdir(self.path)
-            if self.chromedriver_path is None:
-                # Auto-install chromedriver without prompting
-                logger.info("Auto-installing chromedriver...")
-                self.__install_chromedriver()
-            else:
-                self.__save_token(token=None)
-                logger.info(
-                    "will use specified chromedriver path, no to specify this path again"
-                )
+            self.__save_token(token=None)
+
+        if self.chromedriver_path is None:
+            # Auto-install/update chromedriver to match Chrome version
+            logger.info("Checking chromedriver version...")
+            self.__install_chromedriver()
+        else:
+            logger.info("Using specified chromedriver path")
 
         if not os.path.exists(self.profile_dir):
             os.mkdir(self.profile_dir)
@@ -101,12 +100,16 @@ class TvDatafeed:
             import chromedriver_autoinstaller
 
         logger.info("Downloading chromedriver...")
-        path = chromedriver_autoinstaller.install(cwd=True)
+        # Force check for latest version to match current Chrome
+        path = chromedriver_autoinstaller.install(cwd=True, no_ssl=False)
 
         if path is not None:
             self.chromedriver_path = os.path.join(
                 self.path, "chromedriver" + (".exe" if ".exe" in path else "")
             )
+            # Remove old version if exists
+            if os.path.exists(self.chromedriver_path):
+                os.remove(self.chromedriver_path)
             shutil.copy(path, self.chromedriver_path)
             self.__save_token(token=None)
 
