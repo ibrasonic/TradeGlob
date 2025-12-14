@@ -121,7 +121,7 @@ cryptos = ['BTCUSD', 'ETHUSD']
 df = fetcher.get_multiple(
     stock_list=cryptos,
     exchange='COINBASE',
-    interval='4h',
+    interval='4 Hour',
     start=date(2024, 1, 1),
     end=date(2024, 12, 31)
 )
@@ -141,7 +141,7 @@ pairs = ['EURUSD', 'GBPUSD', 'USDJPY']
 df = fetcher.get_multiple(
     stock_list=pairs,
     exchange='OANDA',
-    interval='1h',
+    interval='1 Hour',
     start=date(2024, 1, 1),
     end=date(2024, 12, 31)
 )

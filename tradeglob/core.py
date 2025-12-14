@@ -18,23 +18,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from retry import retry
 import holidays
 
-# Import tvDatafeed
-try:
-    from tvDatafeed import Interval
-    try:
-        # Try new version (2.x+) with TvDatafeedLive
-        from tvDatafeed import TvDatafeedLive
-    except ImportError:
-        # Fall back to old version (1.x) with just TvDatafeed
-        from tvDatafeed import TvDatafeed as TvDatafeedLive
-        logger.warning(
-            "Using old tvDatafeed version. For better features, upgrade with: "
-            "pip install --upgrade tvDatafeed"
-        )
-except ImportError:
-    raise ImportError(
-        "tvDatafeed not found. Install with: pip install tvDatafeed"
-    )
+# Import fixed tvDatafeed (vendored, Selenium 4.x compatible)
+from ._vendor.main import TvDatafeed as TvDatafeedLive, Interval
 
 # Import TradeGlob components
 from .config import FetcherConfig, MarketConfig
