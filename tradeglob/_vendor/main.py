@@ -99,18 +99,9 @@ class TvDatafeed:
             os.system("pip install -q chromedriver-autoinstaller")
             import chromedriver_autoinstaller
 
-        logger.info("Downloading chromedriver...")
-        # Force check for latest version to match current Chrome
-        path = chromedriver_autoinstaller.install(cwd=True, no_ssl=False)
-
-        if path is not None:
-            self.chromedriver_path = os.path.join(
-                self.path, "chromedriver" + (".exe" if ".exe" in path else "")
-            )
-            # Remove old version if exists
-            if os.path.exists(self.chromedriver_path):
-                os.remove(self.chromedriver_path)
-            shutil.copy(path, self.chromedriver_path)
+        # Use chromedriver directly from autoinstaller (auto-matches Chrome version)
+        logger.info("Installing/updating chromedriver to match Chrome version...")
+        self.chromedriver_path = chromedriver_autoinstaller.install()
             self.__save_token(token=None)
 
             try:
