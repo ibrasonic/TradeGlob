@@ -175,8 +175,7 @@ class TradeGlobFetcher:
                 interval=interval,
                 n_bars=n_bars,
                 fut_contract=fut_contract,
-                extended_session=extended_session,
-                timeout=self.config.connection_timeout
+                extended_session=extended_session
             )
             
             if df is None or df.empty:
