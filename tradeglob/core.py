@@ -100,29 +100,28 @@ class TradeGlobFetcher:
         
         # Initialize TradingView connection
         try:
-            self.tv = TvDatafeedLive(username=username, password=password)
-            
-            # Check if authentication actually succeeded
-            # tvDatafeed sets token to "unauthorized_user_token" if login fails
-            self.authenticated = (
-                username is not None and 
-                hasattr(self.tv, 'token') and 
-                self.tv.token != "unauthorized_user_token" and
-                self.tv.token is not None
-            )
-            
-            if username is not None and not self.authenticated:
-                logger.warning(
-                    "⚠ Authentication failed. Continuing in anonymous mode. "
-                    "Check your credentials or network connection."
+            # Only create connection if credentials provided
+            if username is not None:
+                self.tv = TvDatafeedLive(username=username, password=password)
+                
+                # Check if authentication actually succeeded
+                self.authenticated = (
+                    hasattr(self.tv, 'token') and 
+                    self.tv.token != "unauthorized_user_token" and
+                    self.tv.token is not None
                 )
-            elif self.authenticated:
-                logger.info("✓ Initialized with authentication (better stability)")
+                
+                if not self.authenticated:
+                    logger.warning(
+                        "⚠ Authentication failed. Continuing in anonymous mode. "
+                        "Check your credentials or network connection."
+                    )
+                else:
+                    logger.info("✓ Initialized with authentication")
             else:
-                logger.warning(
-                    "⚠ Initialized in anonymous mode. "
-                    "For better stability, create a free TradingView account."
-                )
+                # Start in lazy mode - don't create connection until needed
+                self.tv = None
+                self.authenticated = False
         except Exception as e:
             raise AuthenticationError(f"Failed to initialize TradingView connection: {e}")
         
@@ -133,6 +132,45 @@ class TradeGlobFetcher:
         self.markets = MarketConfig()
         
         logger.info(f"TradeGlob v1.0.0 initialized")
+    
+    def authenticate(self, username: str = None, password: str = None, force_new: bool = False) -> bool:
+        """
+        Authenticate with TradingView account
+        
+        Opens Chrome browser for manual login - fast and automatic detection.
+        
+        Args:
+            username: TradingView username/email (optional)
+            password: TradingView password (optional)
+            force_new: If True, clears cached token and forces new login
+            
+        Returns:
+            bool: True if authentication successful
+        """
+        try:
+            # Clear cached token if requested
+            if force_new:
+                import os
+                token_file = os.path.join(os.path.expanduser("~"), ".tv_datafeed", "token")
+                if os.path.exists(token_file):
+                    os.remove(token_file)
+            
+            # Create or replace connection with authenticated one
+            self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+            
+            # Check authentication status
+            self.authenticated = (
+                hasattr(self.tv, 'token') and 
+                self.tv.token != "unauthorized_user_token" and
+                self.tv.token is not None
+            )
+            
+            return self.authenticated
+                
+        except Exception as e:
+            logger.error(f"Authentication error: {e}")
+            self.authenticated = False
+            return False
     
     def _get_interval(self, interval: str) -> Interval:
         """Convert string interval to Interval enum"""
@@ -153,6 +191,12 @@ class TradeGlobFetcher:
             logger=logger
         )(func)
     
+    def _ensure_connection(self):
+        """Ensure tv connection exists (lazy initialization)"""
+        if self.tv is None:
+            self.tv = TvDatafeedLive()
+            self.authenticated = False
+    
     def _fetch_single(
         self,
         symbol: str,
@@ -165,8 +209,12 @@ class TradeGlobFetcher:
         """
         Fetch single symbol with retry logic
         
+        Ensures connection is initialized before fetching.
+        
         This is the core fetch function with retry mechanism
         """
+        self._ensure_connection()
+        
         @self._create_retry_wrapper
         def _fetch():
             df = self.tv.get_hist(

@@ -19,14 +19,15 @@ TradeGlob provides seamless access to:
 
 ## ✨ Key Features
 
-- ✅ **Authentication Support** - Free TradingView account = better stability
+- ⚡ **Fast Auto-Login** - Browser opens, detects login, closes automatically (~3-5 sec)
+- 🔐 **Smart Authentication** - Remembers session, no repeated logins
 - ✅ **Parallel Fetching** - 5x faster for multiple symbols
-- ✅ **Smart Caching** - Automatic caching with expiration
-- ✅ **Error Handling** - Comprehensive retry mechanism
-- ✅ **Data Validation** - Quality checks on all data
-- ✅ **Progress Indicators** - Visual feedback for long operations
-- ✅ **Type Hints** - Full IDE support
-- ✅ **Production Ready** - Battle-tested reliability
+- 💾 **Smart Caching** - Automatic caching with expiration
+- 🔄 **Error Handling** - Comprehensive retry mechanism
+- ✔️ **Data Validation** - Quality checks on all data
+- 📊 **Progress Indicators** - Visual feedback for long operations
+- 🎯 **Type Hints** - Full IDE support
+- 🚀 **Production Ready** - Battle-tested reliability
 
 ## 🚀 Quick Start
 
@@ -79,6 +80,37 @@ print(df_multi.head())
 ## 📚 Examples
 
 > **💡 Tip:** To find symbols, visit [TradingView.com](https://www.tradingview.com/) and search manually, or use common patterns like 'AAPL', 'BTCUSD', 'EURUSD'.
+
+### Authentication (Recommended for Better Stability)
+
+**🎯 New: Fast Automatic Browser Login**
+
+TradeGlob now features automatic login detection - just log in once and you're set!
+
+```python
+from tradeglob import TradeGlobFetcher
+
+# Initialize without credentials
+fetcher = TradeGlobFetcher()
+
+# Authenticate via browser (opens Chrome, detects login automatically)
+fetcher.authenticate()
+# → Browser opens to TradingView login
+# → Log in manually (or auto-redirects if already logged in)
+# → Closes automatically when done
+# → Super fast! (~3-5 seconds if already logged in)
+
+# Check authentication status
+if fetcher.authenticated:
+    print("✓ Authenticated - Better stability & rate limits")
+    
+# Force new login (clears cache)
+fetcher.authenticate(force_new=True)
+else:
+    print("⚠ Anonymous mode - May hit rate limits")
+```
+
+> **💡 Benefits:** Free TradingView account provides better rate limits and stability. No paid subscription required!
 
 ### Egyptian Stock Market
 

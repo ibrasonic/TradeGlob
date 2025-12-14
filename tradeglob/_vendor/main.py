@@ -125,21 +125,13 @@ class TvDatafeed:
         try:
             # Force check by clearing version tracking
             self.chromedriver_path = chromedriver_autoinstaller.install(True)
-        except:
+        except Exception as e:
             # Fallback to normal install
-            self.chromedriver_path = chromedriver_autoinstaller.install()
-            self.__save_token(token=None)
-
+            logger.debug(f"Install with force failed, trying normal install: {e}")
             try:
-                time.sleep(1)
-                os.remove(path)
-            except:
-                logger.info(
-                    f"unable to remove file '{path}', you may want to remove it manually"
-                )
-
-        else:
-            logger.error(" unable to download chromedriver automatically.")
+                self.chromedriver_path = chromedriver_autoinstaller.install()
+            except Exception as e2:
+                logger.error(f"Unable to download chromedriver automatically: {e2}")
 
     def clear_cache(self):
 
@@ -181,10 +173,7 @@ class TvDatafeed:
 
         driver = self.__webdriver_init()
 
-        if not self.__automatic_login:
-            input()
-
-        else:
+        if self.__automatic_login:
             try:
                 logger.debug("click sign in")
                 driver.find_element(By.CLASS_NAME, "tv-header__user-menu-button").click()
@@ -229,21 +218,30 @@ class TvDatafeed:
             pass
 
         elif self.token_date == datetime.date.today():
+            logger.debug("Using cached token from today")
             pass
 
         elif token is not None and (username is None or password is None):
+            logger.debug("Token exists but expired, refreshing...")
             driver = self.__webdriver_init()
             if driver is not None:
                 token = self.__get_token(driver)
-                self.token_date = datetime.date.today()
-                self.__save_token(token)
+                if token is not None:
+                    self.token_date = datetime.date.today()
+                    self.__save_token(token)
+                else:
+                    logger.error("Failed to extract token after browser login")
 
         else:
+            logger.debug("Performing new login...")
             driver = self.__login(username, password)
             if driver is not None:
                 token = self.__get_token(driver)
-                self.token_date = datetime.date.today()
-                self.__save_token(token)
+                if token is not None:
+                    self.token_date = datetime.date.today()
+                    self.__save_token(token)
+                else:
+                    logger.error("Failed to extract token after browser login")
 
         return token
 
@@ -260,8 +258,19 @@ class TvDatafeed:
             options.add_argument("--headless")
             logger.debug("chromedriver in headless mode")
 
-        # options.add_argument("--start-maximized")
+        # Performance optimizations for faster startup
         options.add_argument("--disable-gpu")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-backgrounding-occluded-windows")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        
+        # Reduce initial load
+        options.add_argument("--disk-cache-size=1")
+        options.page_load_strategy = 'eager'  # Don't wait for full page load
 
         # special workaround for linux
         if sys.platform == "linux":
@@ -278,25 +287,69 @@ class TvDatafeed:
 
         driver = None
         try:
-            if not self.__automatic_login:
-                print(
-                    "\n\n\nYou need to login manually\n\n Press 'enter' to open the browser "
-                )
-                input()
-                print(
-                    "opening browser. Press enter once lgged in return back and press 'enter'. \n\nDO NOT CLOSE THE BROWSER"
-                )
-                time.sleep(5)
-
             # Python 3.12 + Selenium 4.x: Use service parameter instead of executable_path
             from selenium.webdriver.chrome.service import Service
             service = Service(executable_path=self.chromedriver_path)
+            
+            # Enable performance logging to capture websocket frames
+            options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
+            
             driver = webdriver.Chrome(service=service, options=options)
 
-            logger.debug("opening https://in.tradingview.com ")
+            logger.debug("Opening TradingView login page...")
             driver.set_window_size(1920, 1080)
-            driver.get("https://in.tradingview.com")
-            time.sleep(5)
+            
+            if not self.__automatic_login:
+                # Navigate directly to login page
+                driver.get("https://www.tradingview.com/accounts/signin/")
+                
+                timeout = 300  # 5 minutes timeout
+                start_time = time.time()
+                logged_in = False
+                
+                # Quick poll to detect instant redirect if already logged in
+                for _ in range(5):  # Check 5 times over 1 second
+                    time.sleep(0.2)
+                    current_url = driver.current_url
+                    if not any(x in current_url for x in ['/accounts/signin', '/accounts/signup', '/signup']):
+                        logged_in = True
+                        break
+                
+                # Check if already logged in
+                if logged_in:
+                    print("✅ Already logged in! Extracting token...\n")
+                    logger.info("Already authenticated - session detected")
+                    logged_in = True
+                else:
+                    # Not logged in yet, wait for user to complete login
+                    print("   📝 Please complete the login in the browser...\n")
+                    
+                    while (time.time() - start_time) < timeout:
+                        try:
+                            current_url = driver.current_url
+                            
+                            # Simple detection: If we're no longer on the login/signup pages, user logged in
+                            if not any(x in current_url for x in ['/accounts/signin', '/accounts/signup', '/signup']):
+                                # Give it a tiny moment to ensure redirect is complete
+                                time.sleep(0.3)
+                                
+                                # Verify we're still not on auth pages
+                                recheck_url = driver.current_url
+                                if not any(x in recheck_url for x in ['/accounts/signin', '/accounts/signup', '/signup']):
+                                    logger.info(f"Login confirmed after {int(time.time() - start_time)} seconds")
+                                    logged_in = True
+                                    break
+                        except:
+                            pass
+                        
+                        time.sleep(0.2)  # Check every 0.2 seconds for instant detection
+                
+                if not logged_in:
+                    logger.warning(f"Login timeout after {int(time.time() - start_time)} seconds")
+            else:
+                # Automatic login mode (with credentials)
+                driver.get("https://in.tradingview.com")
+                time.sleep(2)  # Reduced from 5 to 2 seconds
 
             return driver
 
@@ -308,32 +361,70 @@ class TvDatafeed:
 
     @staticmethod
     def __get_token(driver: webdriver.Chrome):
+        logger.info("Navigating to chart page to capture token...")
         driver.get("https://www.tradingview.com/chart/")
 
         def process_browser_logs_for_network_events(logs):
             for entry in logs:
-                log = json.loads(entry["message"])["message"]
+                try:
+                    log = json.loads(entry["message"])["message"]
 
-                if "Network.webSocketFrameSent" in log["method"]:
-                    if (
-                        "set_auth_token" in log["params"]["response"]["payloadData"]
-                        and "unauthorized_user_token"
-                        not in log["params"]["response"]["payloadData"]
-                    ):
-                        yield log
+                    if "Network.webSocketFrameSent" in log["method"]:
+                        payload = log.get("params", {}).get("response", {}).get("payloadData", "")
+                        if (
+                            "set_auth_token" in payload
+                            and "unauthorized_user_token" not in payload
+                        ):
+                            yield log
+                    # Also check for webSocketFrameReceived
+                    elif "Network.webSocketFrameReceived" in log["method"]:
+                        payload = log.get("params", {}).get("response", {}).get("payloadData", "")
+                        if (
+                            "set_auth_token" in payload
+                            and "unauthorized_user_token" not in payload
+                        ):
+                            yield log
+                except:
+                    continue
 
-        logs = driver.get_log("performance")
-        events = process_browser_logs_for_network_events(logs)
+        # Aggressive token extraction - check immediately and frequently
         token = None
-        for event in events:
-            x = event
-            token = json.loads(x["params"]["response"]["payloadData"].split("~")[-1])[
-                "p"
-            ][0]
+        wait_times = [1, 1, 1, 2, 2, 3]  # Rapid checks, total up to 10 seconds max
+        
+        for attempt, wait_time in enumerate(wait_times, 1):
+            time.sleep(wait_time)
+            
+            try:
+                logs = driver.get_log("performance")
+                events = list(process_browser_logs_for_network_events(logs))
+                
+                for event in events:
+                    try:
+                        payload = event["params"]["response"]["payloadData"]
+                        # Parse websocket message format: ~m~<length>~m~<json>
+                        token_data = payload.split("~m~")[-1]
+                        parsed = json.loads(token_data)
+                        
+                        # Extract token from payload structure
+                        if isinstance(parsed, dict) and "p" in parsed:
+                            token = parsed["p"][0]
+                        elif isinstance(parsed, list) and len(parsed) > 0:
+                            token = parsed[0]
+                        
+                        if token and token != "unauthorized_user_token":
+                            logger.info(f"Token extracted successfully")
+                            driver.quit()
+                            return token
+                    except:
+                        continue
+                    
+            except Exception as e:
+                logger.error(f"Error retrieving logs: {e}")
 
+        # Token extraction failed
+        logger.error("❌ Failed to extract token after all attempts")
         driver.quit()
-
-        return token
+        return None
 
     def __create_connection(self):
         logging.debug("creating websocket connection")
