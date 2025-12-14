@@ -258,6 +258,7 @@ class TvDatafeed:
         else:
             options.add_argument(f"user-data-dir={self.profile_dir}")
 
+        driver = None
         try:
             if not self.__automatic_login:
                 print(
@@ -269,9 +270,10 @@ class TvDatafeed:
                 )
                 time.sleep(5)
 
-            driver = webdriver.Chrome(
-                self.chromedriver_path, desired_capabilities=caps, options=options
-            )
+            # Python 3.12 + Selenium 4.x: Use service parameter instead of executable_path
+            from selenium.webdriver.chrome.service import Service
+            service = Service(executable_path=self.chromedriver_path)
+            driver = webdriver.Chrome(service=service, options=options)
 
             logger.debug("opening https://in.tradingview.com ")
             driver.set_window_size(1920, 1080)
@@ -281,8 +283,10 @@ class TvDatafeed:
             return driver
 
         except Exception as e:
-            driver.quit()
+            if driver is not None:
+                driver.quit()
             logger.error(e)
+            return None
 
     @staticmethod
     def __get_token(driver: webdriver.Chrome):
