@@ -45,11 +45,6 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-**Important:** TradeGlob requires `numpy<2.3` for compatibility with `numba`. If you have `numpy>=2.3` installed:
-```bash
-pip install "numpy>=1.24,<2.3" --force-reinstall
-```
-
 ### Basic Usage
 
 ```python
