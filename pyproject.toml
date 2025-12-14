@@ -7,7 +7,7 @@ name = "tradeglob"
 version = "1.0.0"
 description = "Universal Market Data Fetcher - Access 3.5+ million instruments from global exchanges"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.7,<3.13"
 license = {text = "MIT License"}
 authors = [
     {name = "Ibrahim Badawy", email = "ibrahim.m.badawy@gmail.com"}
@@ -25,10 +25,11 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "selenium>=4.9.0",
+    "selenium>=4.9.0,<5.0.0",
     "websocket-client>=1.0.0",
     "chromedriver-autoinstaller",
     "retry>=0.9.2",
