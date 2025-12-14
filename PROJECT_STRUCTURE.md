@@ -45,9 +45,10 @@ Main class for fetching market data.
 **Key Methods:**
 - `get_ohlcv()` - Fetch single symbol OHLCV data
 - `get_multiple()` - Fetch multiple symbols (parallel/sequential)
-- `search_symbol()` - Search for symbols
 - `clear_cache()` - Cache management
 - `get_cache_info()` - Cache statistics
+- `export_data()` - Export to CSV, Excel, Parquet, JSON, HDF5
+- `export_multi_format()` - Export to multiple formats at once
 
 ### 2. **Configuration System** (`config.py`)
 

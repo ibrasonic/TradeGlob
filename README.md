@@ -83,7 +83,7 @@ print(df_multi.head())
 
 ## 📚 Examples
 
-> **💡 Tip:** Not sure about exchange names or symbols? Use `fetcher.search_symbol('SYMBOL_NAME')` to find correct symbols and exchanges!
+> **💡 Tip:** To find symbols, visit [TradingView.com](https://www.tradingview.com/) and search manually, or use common patterns like 'AAPL', 'BTCUSD', 'EURUSD'.
 
 ### Egyptian Stock Market
 
@@ -125,11 +125,6 @@ df = fetcher.get_multiple(
     start=date(2024, 1, 1),
     end=date(2024, 12, 31)
 )
-
-# Search for available crypto symbols
-results = fetcher.search_symbol('BTC', 'BINANCE')
-for r in results[:5]:
-    print(f"{r['symbol']} - {r['description']}")
 ```
 
 ### Forex
@@ -155,11 +150,6 @@ df = fetcher.get_multiple(
 results = fetcher.search_symbol('EUR', 'OANDA')
 for r in results[:5]:
     print(f"{r['symbol']} - {r['description']}")
-```
-
-### With pandas_ta Integration
-
-```python
 import pandas_ta as ta
 
 # Fetch data
@@ -266,28 +256,17 @@ if results:
     print(results[0])
     # {'symbol': 'AAPL', 'exchange': 'NASDAQ', 'description': 'Apple Inc', ...}
 ```
-
-### Method 2: Manual verification (no auth required)
+### Manual Verification
 1. Visit [TradingView](https://www.tradingview.com/)
 2. Search for your stock/crypto/forex pair
 3. Check the chart URL or symbol details
 
 **Common patterns:**
-- Stocks: `AAPL` (NASDAQ), `TSLA` (NASDAQ), `2222` (TADAWUL - Aramco)
-- Crypto: `BTCUSD` (COINBASE), `BTCUSDT` (BINANCE), `ETHUSD` (COINBASE)
-- Forex: `EURUSD` (OANDA), `GBPUSD` (OANDA), `USDJPY` (FX)
+- **Stocks:** `AAPL` (NASDAQ), `TSLA` (NASDAQ), `2222` (TADAWUL - Aramco)
+- **Crypto:** `BTCUSD` (COINBASE), `BTCUSDT` (BINANCE), `ETHUSD` (COINBASE)
+- **Forex:** `EURUSD` (OANDA), `GBPUSD` (OANDA), `USDJPY` (FX)
 
-### Method 3: Try fetching directly
-```python
-# If symbol exists, fetch will succeed; if not, you'll get an error
-try:
-    df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 10)
-    print("✓ Symbol exists!")
-except:
-    print("✗ Symbol not found, try different spelling")
-```
-
-## 💾 Cache Management
+### Try Fetching D
 
 ```python
 # Get cache info

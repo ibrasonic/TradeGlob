@@ -72,13 +72,6 @@ print(df_forex.tail())
 df_forex.to_csv('output_2_forex.csv')
 print("✓ Exported to: output_2_forex.csv")
 
-# Search for symbols
-print("\n4. Symbol Search...")
-results = fetcher.search_symbol('apple', 'NASDAQ')
-if results:
-    print(f"Found {len(results)} results for 'apple':")
-    print(f"  - {results[0]['symbol']}: {results[0].get('description', 'N/A')}")
-
 print("\n" + "=" * 70)
 print("Global markets example completed!")
 print("=" * 70)
