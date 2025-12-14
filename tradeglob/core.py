@@ -622,24 +622,45 @@ class TradeGlobFetcher:
     
     def search_symbol(self, text: str, exchange: str = '') -> List[dict]:
         """
-        Search for symbols on TradingView
+        Search for symbols (NOT SUPPORTED in anonymous mode)
+        
+        This feature requires TradingView authentication which is unreliable.
+        Since TradeGlob is designed for anonymous access, use these alternatives:
+        
+        Alternative Methods:
+            1. Visit tradingview.com and search manually
+            2. Use common patterns: 'AAPL', 'BTCUSD', 'EURUSD', etc.
+            3. Try fetching directly - if symbol exists, it will work
         
         Args:
-            text: Search text (e.g., 'apple', 'aramco')
-            exchange: Filter by exchange (optional)
+            text: Search text (not used)
+            exchange: Exchange filter (not used)
             
         Returns:
-            List of matching symbols with details
+            Empty list with helpful message
             
         Example:
-            >>> results = fetcher.search_symbol('apple', 'NASDAQ')
-            >>> print(results[0]['symbol'])  # 'AAPL'
+            >>> # Instead of searching, try fetching directly:
+            >>> try:
+            >>>     df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 10)
+            >>>     print("✓ Symbol exists!")
+            >>> except:
+            >>>     print("✗ Try different symbol/exchange")
         """
-        try:
-            return self.tv.search_symbol(text, exchange)
-        except Exception as e:
-            logger.error(f"Search failed: {e}")
-            return []
+        logger.info(
+            "\n" + "="*60 + "\n"
+            "❌ Symbol search is NOT SUPPORTED in anonymous mode\n\n"
+            "To find symbols, use one of these methods:\n"
+            "1. Visit https://www.tradingview.com/ and search manually\n"
+            "2. Use common patterns:\n"
+            "   • Stocks: 'AAPL', 'TSLA', 'GOOGL'\n"
+            "   • Crypto: 'BTCUSD' (COINBASE), 'BTCUSDT' (BINANCE)\n"
+            "   • Forex: 'EURUSD' (OANDA), 'GBPUSD' (OANDA)\n"
+            "3. Try fetching - if symbol exists, it will work:\n"
+            "   df = fetcher.get_ohlcv('SYMBOL', 'EXCHANGE', 'Daily', 10)\n"
+            + "="*60
+        )
+        return []
     
     def get_cache_info(self) -> dict:
         """Get cache statistics"""

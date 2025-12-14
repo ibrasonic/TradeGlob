@@ -45,6 +45,11 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
+**Important:** TradeGlob requires `numpy<2.3` for compatibility with `numba`. If you have `numpy>=2.3` installed:
+```bash
+pip install "numpy>=1.24,<2.3" --force-reinstall
+```
+
 ### Basic Usage
 
 ```python
@@ -78,6 +83,8 @@ print(df_multi.head())
 
 ## 📚 Examples
 
+> **💡 Tip:** Not sure about exchange names or symbols? Use `fetcher.search_symbol('SYMBOL_NAME')` to find correct symbols and exchanges!
+
 ### Egyptian Stock Market
 
 ```python
@@ -103,35 +110,51 @@ df = fetcher.get_multiple(
 ### Cryptocurrency
 
 ```python
-# Bitcoin from Binance
-df = fetcher.get_ohlcv('BTCUSD', 'BINANCE', 'Daily', n_bars=365)
+# Bitcoin from Binance (use BTCUSDT for perpetual, or search for correct symbol)
+df = fetcher.get_ohlcv('BTCUSDT', 'BINANCE', 'Daily', n_bars=365)
 
-# Multiple crypto pairs
-cryptos = ['BTCUSD', 'ETHUSD', 'BNBUSD']
+# Coinbase (more reliable for USD pairs)
+df = fetcher.get_ohlcv('BTCUSD', 'COINBASE', 'Daily', n_bars=365)
+
+# Multiple crypto pairs from Coinbase
+cryptos = ['BTCUSD', 'ETHUSD']
 df = fetcher.get_multiple(
     stock_list=cryptos,
-    exchange='BINANCE',
-    interval='4 Hour',
+    exchange='COINBASE',
+    interval='4h',
     start=date(2024, 1, 1),
     end=date(2024, 12, 31)
 )
+
+# Search for available crypto symbols
+results = fetcher.search_symbol('BTC', 'BINANCE')
+for r in results[:5]:
+    print(f"{r['symbol']} - {r['description']}")
 ```
 
 ### Forex
 
 ```python
-# EUR/USD
-df = fetcher.get_ohlcv('EURUSD', 'FX_IDC', 'Daily', n_bars=500)
+# EUR/USD from OANDA or FX
+df = fetcher.get_ohlcv('EURUSD', 'OANDA', 'Daily', n_bars=500)
+
+# Or use FX for generic forex data
+df = fetcher.get_ohlcv('EURUSD', 'FX', 'Daily', n_bars=500)
 
 # Multiple pairs
 pairs = ['EURUSD', 'GBPUSD', 'USDJPY']
 df = fetcher.get_multiple(
     stock_list=pairs,
-    exchange='FX_IDC',
-    interval='1 Hour',
+    exchange='OANDA',
+    interval='1h',
     start=date(2024, 1, 1),
     end=date(2024, 12, 31)
 )
+
+# Search for forex pairs
+results = fetcher.search_symbol('EUR', 'OANDA')
+for r in results[:5]:
+    print(f"{r['symbol']} - {r['description']}")
 ```
 
 ### With pandas_ta Integration
@@ -231,16 +254,37 @@ fetcher = TradeGlobFetcher(
 - **BINANCE**, **COINBASE**, **KRAKEN**
 - **FX_IDC**, **OANDA**, **FXCM**
 
-## 🔍 Symbol Search
+## 🔍 Finding Correct Symbols
 
+**Note:** `search_symbol()` requires TradingView authentication. If you're using without credentials, here's how to find symbols:
+
+### Method 1: Use search_symbol() (requires authentication)
 ```python
-# Search for symbols
+fetcher = TradeGlobFetcher(username='your_email', password='your_password')
 results = fetcher.search_symbol('apple', 'NASDAQ')
-print(results[0])
-# {'symbol': 'AAPL', 'exchange': 'NASDAQ', 'description': 'Apple Inc', ...}
+if results:
+    print(results[0])
+    # {'symbol': 'AAPL', 'exchange': 'NASDAQ', 'description': 'Apple Inc', ...}
+```
 
-# Search Saudi Aramco
-results = fetcher.search_symbol('aramco', 'TADAWUL')
+### Method 2: Manual verification (no auth required)
+1. Visit [TradingView](https://www.tradingview.com/)
+2. Search for your stock/crypto/forex pair
+3. Check the chart URL or symbol details
+
+**Common patterns:**
+- Stocks: `AAPL` (NASDAQ), `TSLA` (NASDAQ), `2222` (TADAWUL - Aramco)
+- Crypto: `BTCUSD` (COINBASE), `BTCUSDT` (BINANCE), `ETHUSD` (COINBASE)
+- Forex: `EURUSD` (OANDA), `GBPUSD` (OANDA), `USDJPY` (FX)
+
+### Method 3: Try fetching directly
+```python
+# If symbol exists, fetch will succeed; if not, you'll get an error
+try:
+    df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 10)
+    print("✓ Symbol exists!")
+except:
+    print("✗ Symbol not found, try different spelling")
 ```
 
 ## 💾 Cache Management
