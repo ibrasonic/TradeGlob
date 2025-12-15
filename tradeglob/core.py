@@ -12,6 +12,8 @@ Main class for fetching market data from TradingView with advanced features:
 
 import logging
 import pandas as pd
+import requests
+import json
 from datetime import date, datetime
 from typing import List, Optional, Union, Dict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -763,3 +765,71 @@ class TradeGlobFetcher:
         """
         from .utils.export import export_multi_format
         return export_multi_format(df, base_path, formats, **kwargs)
+    
+    def search_symbol(self, text: str, exchange: str = '') -> List[dict]:
+        """Search for symbols on TradingView
+        
+        Args:
+            text: Search query (e.g., 'AAPL', 'apple', 'COMI')
+            exchange: Optional exchange filter (e.g., 'NASDAQ', 'EGX', '')
+                     Empty string searches all exchanges
+        
+        Returns:
+            List of dictionaries with symbol information:
+            [
+                {
+                    'symbol': 'COMI',
+                    'exchange': 'EGX',
+                    'description': 'Commercial International Bank Egypt',
+                    'type': 'stock',
+                    ...
+                },
+                ...
+            ]
+        
+        Example:
+            >>> # Search all exchanges
+            >>> results = fetcher.search_symbol('COMI')
+            
+            >>> # Search specific exchange
+            >>> results = fetcher.search_symbol('COMI', 'EGX')
+            >>> if results:
+            ...     print(f"Symbol: {results[0]['symbol']}")
+            ...     print(f"Exchange: {results[0]['exchange']}")
+            ...     print(f"Description: {results[0]['description']}")
+        """
+        url = f'https://symbol-search.tradingview.com/symbol_search/?text={text}&hl=1&exchange={exchange}&lang=en&type=&domain=production'
+        
+        # Add headers required by TradingView API
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+            'Origin': 'https://www.tradingview.com',
+            'Referer': 'https://www.tradingview.com/'
+        }
+        
+        symbols_list = []
+        try:
+            resp = requests.get(url, headers=headers, timeout=10)
+            
+            if resp.status_code != 200:
+                logger.error(f"Symbol search HTTP error: {resp.status_code}")
+                return []
+            
+            if not resp.text or resp.text.strip() == '':
+                logger.error("Symbol search: Empty response from API")
+                return []
+            
+            # Remove HTML tags and parse JSON
+            symbols_list = json.loads(resp.text.replace('</em>', '').replace('<em>', ''))
+            
+            logger.debug(f"Found {len(symbols_list)} symbols for '{text}' on '{exchange or 'all exchanges'}'")
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Symbol search network error: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Symbol search JSON parse error: {e}")
+        except Exception as e:
+            logger.error(f"Symbol search error: {e}")
+        
+        return symbols_list

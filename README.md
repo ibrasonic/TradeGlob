@@ -87,30 +87,40 @@ print(df_multi.head())
 
 TradeGlob now features automatic login detection - just log in once and you're set!
 
+**Option 1: Authenticate during initialization (fastest)**
 ```python
 from tradeglob import TradeGlobFetcher
 
-# Initialize without credentials
-fetcher = TradeGlobFetcher()
-
-# Authenticate via browser (opens Chrome, detects login automatically)
-fetcher.authenticate()
+# Authenticate immediately when creating fetcher
+fetcher = TradeGlobFetcher(auth=True)
 # → Browser opens to TradingView login
 # → Log in manually (or auto-redirects if already logged in)
 # → Closes automatically when done
-# → Super fast! (~3-5 seconds if already logged in)
+# → Super fast! (~1-2 seconds if logged in today, cached token used)
+```
+
+**Option 2: Authenticate later (more flexible)**
+```python
+# Initialize without authentication
+fetcher = TradeGlobFetcher()
+
+# Authenticate when ready
+fetcher.authenticate()
+# → Same fast browser login process
+
+# Force new login (clears cache)
+fetcher.authenticate(force_new=True)
 
 # Check authentication status
 if fetcher.authenticated:
     print("✓ Authenticated - Better stability & rate limits")
-    
-# Force new login (clears cache)
-fetcher.authenticate(force_new=True)
 else:
     print("⚠ Anonymous mode - May hit rate limits")
 ```
 
 > **💡 Benefits:** Free TradingView account provides better rate limits and stability. No paid subscription required!
+> 
+> **⚡ Performance:** Token cached for 24 hours - subsequent initializations take ~1-2 seconds with no browser!
 
 ### Egyptian Stock Market
 
@@ -271,25 +281,50 @@ fetcher = TradeGlobFetcher(
 - **BINANCE**, **COINBASE**, **KRAKEN**
 - **FX_IDC**, **OANDA**, **FXCM**
 
-## 🔍 Finding Correct Symbols
+## 🔍 Symbol Search
 
-**Note:** `search_symbol()` requires TradingView authentication. If you're using without credentials, here's how to find symbols:
+TradeGlob includes a built-in symbol search function - **no authentication required!**
 
-### Method 1: Use search_symbol() (requires authentication)
+### Using search_symbol()
+
 ```python
-fetcher = TradeGlobFetcher(username='your_email', password='your_password')
-results = fetcher.search_symbol('apple', 'NASDAQ')
+from tradeglob import TradeGlobFetcher
+
+fetcher = TradeGlobFetcher()  # No auth needed for search
+
+# Search all exchanges
+results = fetcher.search_symbol('COMI')
+for r in results[:3]:
+    print(f"{r['symbol']} ({r['exchange']}) - {r['description']}")
+# Output: COMI (EGX) - Commercial International Bank Egypt
+
+# Search specific exchange
+results = fetcher.search_symbol('COMI', 'EGX')
 if results:
-    print(results[0])
-    # {'symbol': 'AAPL', 'exchange': 'NASDAQ', 'description': 'Apple Inc', ...}
+    symbol_info = results[0]
+    print(f"Symbol: {symbol_info['symbol']}")
+    print(f"Exchange: {symbol_info['exchange']}")
+    print(f"Description: {symbol_info['description']}")
+    print(f"Type: {symbol_info['type']}")
+
+# Search with partial name
+results = fetcher.search_symbol('apple', 'NASDAQ')
+# Returns: AAPL and related symbols
+
+# Crypto search
+results = fetcher.search_symbol('BTC', 'BINANCE')
+
+# Forex search
+results = fetcher.search_symbol('EUR', 'OANDA')
 ```
-### Manual Verification
+
+### Manual Verification (Alternative)
 1. Visit [TradingView](https://www.tradingview.com/)
 2. Search for your stock/crypto/forex pair
 3. Check the chart URL or symbol details
 
 **Common patterns:**
-- **Stocks:** `AAPL` (NASDAQ), `TSLA` (NASDAQ), `2222` (TADAWUL - Aramco)
+- **Stocks:** `AAPL` (NASDAQ), `TSLA` (NASDAQ), `COMI` (EGX), `2222` (TADAWUL - Aramco)
 - **Crypto:** `BTCUSD` (COINBASE), `BTCUSDT` (BINANCE), `ETHUSD` (COINBASE)
 - **Forex:** `EURUSD` (OANDA), `GBPUSD` (OANDA), `USDJPY` (FX)
 
