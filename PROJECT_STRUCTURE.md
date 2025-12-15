@@ -1,4 +1,4 @@
-# TradeGlob - Project Structure
+    # TradeGlob - Project Structure
 
 ## 📁 Directory Structure
 

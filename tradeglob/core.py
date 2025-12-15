@@ -76,6 +76,7 @@ class TradeGlobFetcher:
         self,
         username: Optional[str] = None,
         password: Optional[str] = None,
+        auth: bool = False,
         config: Optional[FetcherConfig] = None
     ):
         """
@@ -84,6 +85,7 @@ class TradeGlobFetcher:
         Args:
             username: TradingView username (None for anonymous, free account recommended)
             password: TradingView password
+            auth: If True, opens browser for authentication immediately (fast auto-login)
             config: FetcherConfig object for customization
         """
         # Configuration
@@ -118,6 +120,21 @@ class TradeGlobFetcher:
                     )
                 else:
                     logger.info("✓ Initialized with authentication")
+            elif auth:
+                # Browser-based authentication requested
+                self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+                
+                # Check if authentication succeeded
+                self.authenticated = (
+                    hasattr(self.tv, 'token') and 
+                    self.tv.token != "unauthorized_user_token" and
+                    self.tv.token is not None
+                )
+                
+                if self.authenticated:
+                    logger.info("✓ Initialized with browser authentication")
+                else:
+                    logger.warning("⚠ Browser authentication failed, using anonymous mode")
             else:
                 # Start in lazy mode - don't create connection until needed
                 self.tv = None
