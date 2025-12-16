@@ -346,6 +346,69 @@ fetcher.clear_cache(exchange='NASDAQ')
 fetcher.clear_cache()
 ```
 
+## 💾 Exporting Data
+
+TradeGlob supports exporting data to multiple formats for analysis and storage.
+
+### Export to Single Format
+
+```python
+from tradeglob import TradeGlobFetcher
+from datetime import date
+
+fetcher = TradeGlobFetcher()
+
+# Fetch data
+df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', n_bars=252)
+
+# Export to CSV
+fetcher.export_data(df, 'aapl_data.csv', format='csv')
+
+# Export to Excel
+fetcher.export_data(df, 'aapl_data.xlsx', format='excel')
+
+# Export to Parquet (efficient for large datasets)
+fetcher.export_data(df, 'aapl_data.parquet', format='parquet')
+
+# Export to JSON
+fetcher.export_data(df, 'aapl_data.json', format='json')
+
+# Export to HDF5 (great for time series)
+fetcher.export_data(df, 'aapl_data.h5', format='hdf5')
+```
+
+### Export to Multiple Formats at Once
+
+```python
+# Fetch multiple stocks
+stocks = ['AAPL', 'MSFT', 'GOOGL']
+df = fetcher.get_multiple(
+    stock_list=stocks,
+    exchange='NASDAQ',
+    interval='Daily',
+    start=date(2024, 1, 1),
+    end=date(2024, 12, 31)
+)
+
+# Export to multiple formats simultaneously
+fetcher.export_multi_format(
+    df,
+    base_filename='nasdaq_stocks',
+    formats=['csv', 'excel', 'parquet']
+)
+# Creates: nasdaq_stocks.csv, nasdaq_stocks.xlsx, nasdaq_stocks.parquet
+```
+
+### Supported Export Formats
+
+| Format | Extension | Best For |
+|--------|-----------|----------|
+| CSV | `.csv` | Universal compatibility, text editors |
+| Excel | `.xlsx` | Business analysis, spreadsheet tools |
+| Parquet | `.parquet` | Large datasets, fast I/O, compression |
+| JSON | `.json` | Web APIs, JavaScript integration |
+| HDF5 | `.h5` | Time series, scientific computing |
+
 ## ⚠️ Important Notes
 
 ### Data Availability
