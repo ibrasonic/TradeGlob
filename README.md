@@ -230,6 +230,38 @@ df = fetcher.get_multiple(
 )
 ```
 
+### Data Validation
+
+```python
+# Enable data quality validation (default)
+df = fetcher.get_ohlcv(
+    'AAPL',
+    'NASDAQ',
+    'Daily',
+    n_bars=100,
+    validate=True  # Checks for missing data, duplicates, price anomalies
+)
+
+# Disable validation for faster fetching
+df = fetcher.get_ohlcv(
+    'AAPL',
+    'NASDAQ',
+    'Daily',
+    n_bars=100,
+    validate=False  # Skip quality checks
+)
+
+# Configure validation globally
+config = FetcherConfig(validate_data=False)  # Disable for all fetches
+fetcher = TradeGlobFetcher(config=config)
+```
+
+**Validation checks:**
+- Missing dates detection
+- Duplicate rows detection  
+- Price anomalies (negative prices, volume issues)
+- Data completeness
+
 ### Parallel vs Sequential Fetching
 
 ```python
@@ -282,14 +314,32 @@ from tradeglob import TradeGlobFetcher, FetcherConfig
 
 # Custom configuration
 config = FetcherConfig(
-    retry_attempts=30,           # Increase retries
-    retry_delay=1.0,             # Longer delay between retries
-    max_workers=10,              # More parallel workers
-    cache_enabled=True,          # Enable caching
-    cache_max_age_hours=48,      # Cache expires after 48 hours
-    safety_buffer=1.5,           # 50% extra bars
-    log_level='DEBUG',           # Detailed logging
-    progress_bar=True            # Show progress bars
+    # Retry settings
+    retry_attempts=30,           # Number of retry attempts (default: 20)
+    retry_delay=1.0,             # Delay between retries in seconds (default: 0.5)
+    retry_backoff=1.5,           # Backoff multiplier for exponential retry (default: 1.0)
+    
+    # Parallel processing
+    max_workers=10,              # Max parallel workers (default: 5)
+    
+    # Cache settings
+    cache_enabled=True,          # Enable caching (default: True)
+    cache_max_age_hours=48,      # Cache expiration in hours (default: 24)
+    
+    # Data fetching optimization
+    safety_buffer=1.5,           # Multiplier for n_bars (1.5 = 50% buffer, default: 1.3)
+    min_bars_daily=100,          # Min bars for daily data (default: 100)
+    min_bars_weekly=20,          # Min bars for weekly data (default: 20)
+    min_bars_monthly=6,          # Min bars for monthly data (default: 6)
+    min_bars_intraday=500,       # Min bars for intraday data (default: 500)
+    
+    # Connection settings
+    connection_timeout=60,       # Timeout in seconds (default: 60)
+    
+    # Logging & Validation
+    log_level='DEBUG',           # Logging level: DEBUG, INFO, WARNING, ERROR (default: ERROR)
+    validate_data=True,          # Enable data quality validation (default: True)
+    progress_bar=True            # Show progress bars (default: True)
 )
 
 fetcher = TradeGlobFetcher(
@@ -297,6 +347,39 @@ fetcher = TradeGlobFetcher(
     password='your_password',
     config=config
 )
+```
+
+### MarketConfig - Exchange Discovery
+
+```python
+from tradeglob import MarketConfig
+
+market = MarketConfig()
+
+# Get all supported exchanges
+all_exchanges = market.get_all_exchanges()
+print(f"Total exchanges: {len(all_exchanges)}")
+
+# Get exchanges by region
+us_exchanges = market.get_region_exchanges('US')
+print(f"US exchanges: {us_exchanges}")  # ['NASDAQ', 'NYSE', 'AMEX', 'OTC']
+
+asia_exchanges = market.get_region_exchanges('ASIA')
+print(f"Asia exchanges: {asia_exchanges}")  # ['TSE', 'HKEX', 'SSE', ...]
+
+crypto_exchanges = market.get_region_exchanges('CRYPTO')
+print(f"Crypto exchanges: {crypto_exchanges}")  # ['BINANCE', 'COINBASE', ...]
+
+# Find which region an exchange belongs to
+region = market.find_exchange('NASDAQ')
+print(f"NASDAQ is in: {region}")  # US
+
+region = market.find_exchange('EGX')
+print(f"EGX is in: {region}")  # AFRICA (EGX is also in EGYPT)
+
+# Access regional exchange lists directly
+print(f"Middle East: {market.MIDDLE_EAST}")  # ['TADAWUL', 'DFM', 'ADX', ...]
+print(f"Europe: {market.EUROPE}")  # ['LSE', 'EURONEXT', 'XETRA', ...]
 ```
 
 ## 🎯 Supported Intervals
