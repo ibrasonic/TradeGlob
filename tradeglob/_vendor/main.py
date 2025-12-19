@@ -81,9 +81,8 @@ class TvDatafeed:
             os.mkdir(self.path)
             self.__save_token(token=None)
 
-        # Always install/update chromedriver to match current Chrome version
-        # Ignore any cached path - always detect and use the compatible version
-        logger.info("Detecting Chrome version and installing compatible chromedriver...")
+        # Smart chromedriver check: only downloads if needed
+        logger.info("Verifying chromedriver compatibility...")
         self.__install_chromedriver()
 
         if not os.path.exists(self.profile_dir):
@@ -98,40 +97,13 @@ class TvDatafeed:
             os.system("pip install -q chromedriver-autoinstaller")
             import chromedriver_autoinstaller
 
-        # Clear chromedriver-autoinstaller cache to force fresh download
-        cache_dirs = [
-            os.path.join(os.path.expanduser("~"), ".wdm", "drivers", "chromedriver"),
-            os.path.join(os.path.expanduser("~"), ".cache", "selenium", "chromedriver")
-        ]
-        for cache_dir in cache_dirs:
-            if os.path.exists(cache_dir):
-                try:
-                    shutil.rmtree(cache_dir)
-                    logger.debug(f"Cleared chromedriver cache: {cache_dir}")
-                except:
-                    pass
-
-        # Clear old cached chromedriver in .tv_datafeed
-        cached_driver = os.path.join(self.path, "chromedriver.exe" if os.name == "nt" else "chromedriver")
-        if os.path.exists(cached_driver):
-            try:
-                os.remove(cached_driver)
-                logger.debug("Removed old cached chromedriver")
-            except:
-                pass
-
-        # Force fresh download to match current Chrome version
-        logger.info("Downloading chromedriver to match Chrome version...")
+        # Smart install: only downloads if chromedriver missing or version mismatch
+        logger.info("Checking chromedriver compatibility with Chrome version...")
         try:
-            # Force check by clearing version tracking
-            self.chromedriver_path = chromedriver_autoinstaller.install(True)
+            self.chromedriver_path = chromedriver_autoinstaller.install()
+            logger.debug(f"Chromedriver ready at: {self.chromedriver_path}")
         except Exception as e:
-            # Fallback to normal install
-            logger.debug(f"Install with force failed, trying normal install: {e}")
-            try:
-                self.chromedriver_path = chromedriver_autoinstaller.install()
-            except Exception as e2:
-                logger.error(f"Unable to download chromedriver automatically: {e2}")
+            logger.error(f"Unable to install/verify chromedriver: {e}")
 
     def clear_cache(self):
 
@@ -152,7 +124,7 @@ class TvDatafeed:
         self.__automatic_login = auto_login
         self.chromedriver_path = chromedriver_path
         self.profile_dir = os.path.join(self.path, "chrome")
-        self.token_date = datetime.date.today() - datetime.timedelta(days=1)
+        self.token_date = None  # Will be set by __load_token() if exists
         self.__assert_dir()
 
         token = None
@@ -181,13 +153,13 @@ class TvDatafeed:
                     '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
                 ).click()
 
-                time.sleep(5)
+                time.sleep(2)  # Reduced from 5s
                 logger.debug("click email")
                 embutton = driver.find_element(By.CLASS_NAME,
                     "tv-signin-dialog__toggle-email"
                 )
                 embutton.click()
-                time.sleep(5)
+                time.sleep(2)  # Reduced from 5s
 
                 logger.debug("entering credentials")
                 username_input = driver.find_element(By.NAME, "username")
@@ -198,7 +170,7 @@ class TvDatafeed:
                 logger.debug("click login")
                 submit_button = driver.find_element(By.CLASS_NAME, "tv-button__loader")
                 submit_button.click()
-                time.sleep(5)
+                time.sleep(2)  # Reduced from 5s
             except Exception as e:
                 logger.error(f"{e}, {e.args}")
                 logger.error(
@@ -210,36 +182,39 @@ class TvDatafeed:
     def auth(self, username, password):
         token = self.__load_token()
 
-        if (
-            token is None
-            and (username is None or password is None)
-            and self.__automatic_login
-        ):
-            pass
+        # Priority 1: Use cached token if it's from today (fastest path)
+        if token is not None and self.token_date == datetime.date.today():
+            logger.info("Using cached token from today - skipping browser launch")
+            return token
 
-        elif self.token_date == datetime.date.today():
-            logger.debug("Using cached token from today")
-            pass
-
-        elif token is not None and (username is None or password is None):
-            logger.debug("Token exists but expired, refreshing...")
-            driver = self.__webdriver_init()
-            if driver is not None:
-                token = self.__get_token(driver)
-                if token is not None:
-                    self.token_date = datetime.date.today()
-                    self.__save_token(token)
-                else:
-                    logger.error("Failed to extract token after browser login")
-
+        # Priority 2: No credentials provided
+        if username is None or password is None:
+            if token is not None:
+                logger.info("Token exists but expired, refreshing without credentials...")
+                driver = self.__webdriver_init()
+                if driver is not None:
+                    token = self.__get_token(driver)
+                    if token is not None:
+                        self.token_date = datetime.date.today()
+                        self.__save_token(token)
+                        driver.quit()
+                    else:
+                        logger.error("Failed to extract token after browser login")
+            elif not self.__automatic_login:
+                logger.warning("No credentials provided and no cached token")
+                token = None
+            # else: auto_login=True without credentials, will return None later
         else:
-            logger.debug("Performing new login...")
+            # Priority 3: Credentials provided, need to login
+            logger.info("Performing login with provided credentials...")
             driver = self.__login(username, password)
             if driver is not None:
                 token = self.__get_token(driver)
                 if token is not None:
                     self.token_date = datetime.date.today()
                     self.__save_token(token)
+                    logger.info("Login successful, token cached")
+                    driver.quit()
                 else:
                     logger.error("Failed to extract token after browser login")
 
@@ -387,9 +362,9 @@ class TvDatafeed:
                 except:
                     continue
 
-        # Aggressive token extraction - check immediately and frequently
+        # Optimized token extraction - start checking immediately
         token = None
-        wait_times = [1, 1, 1, 2, 2, 3]  # Rapid checks, total up to 10 seconds max
+        wait_times = [0.5, 1, 1, 2, 2, 3]  # Total: 9.5 seconds max, starts checking faster
         
         for attempt, wait_time in enumerate(wait_times, 1):
             time.sleep(wait_time)
