@@ -16,6 +16,7 @@ def export_to_csv(
     df: pd.DataFrame,
     filepath: Union[str, Path],
     include_index: bool = True,
+    fill_missing: Union[int, float, str] = 0,
     **kwargs
 ) -> str:
     """
@@ -25,6 +26,7 @@ def export_to_csv(
         df: DataFrame to export
         filepath: Output file path
         include_index: Include index in CSV
+        fill_missing: Value to replace NaN/missing values (default: 0)
         **kwargs: Additional pandas to_csv arguments
         
     Returns:
@@ -36,7 +38,10 @@ def export_to_csv(
     filepath = Path(filepath)
     filepath.parent.mkdir(parents=True, exist_ok=True)
     
-    df.to_csv(filepath, index=include_index, **kwargs)
+    # Fill missing values
+    df_export = df.fillna(fill_missing)
+    
+    df_export.to_csv(filepath, index=include_index, **kwargs)
     logger.info(f"✓ Exported to CSV: {filepath}")
     
     return str(filepath.absolute())
@@ -47,6 +52,7 @@ def export_to_excel(
     filepath: Union[str, Path],
     include_index: bool = True,
     sheet_name: str = 'Sheet1',
+    fill_missing: Union[int, float, str] = 0,
     **kwargs
 ) -> str:
     """
@@ -57,6 +63,7 @@ def export_to_excel(
         filepath: Output file path (.xlsx)
         include_index: Include index in Excel
         sheet_name: Sheet name (if data is single DataFrame)
+        fill_missing: Value to replace NaN/missing values (default: 0)
         **kwargs: Additional pandas to_excel arguments
         
     Returns:
@@ -84,12 +91,14 @@ def export_to_excel(
             if isinstance(data, dict):
                 # Multiple sheets
                 for sheet, df in data.items():
-                    df.to_excel(writer, sheet_name=sheet, index=include_index, **kwargs)
+                    df_export = df.fillna(fill_missing)
+                    df_export.to_excel(writer, sheet_name=sheet, index=include_index, **kwargs)
                     logger.debug(f"  ✓ Sheet '{sheet}': {len(df)} rows")
                 logger.info(f"✓ Exported {len(data)} sheets to Excel: {filepath}")
             else:
                 # Single sheet
-                data.to_excel(writer, sheet_name=sheet_name, index=include_index, **kwargs)
+                df_export = data.fillna(fill_missing)
+                df_export.to_excel(writer, sheet_name=sheet_name, index=include_index, **kwargs)
                 logger.info(f"✓ Exported to Excel: {filepath}")
     except ImportError:
         raise ImportError(
@@ -103,6 +112,7 @@ def export_to_parquet(
     df: pd.DataFrame,
     filepath: Union[str, Path],
     compression: str = 'snappy',
+    fill_missing: Union[int, float, str] = 0,
     **kwargs
 ) -> str:
     """
@@ -112,6 +122,7 @@ def export_to_parquet(
         df: DataFrame to export
         filepath: Output file path (.parquet)
         compression: Compression algorithm ('snappy', 'gzip', 'brotli', 'none')
+        fill_missing: Value to replace NaN/missing values (default: 0)
         **kwargs: Additional pandas to_parquet arguments
         
     Returns:
@@ -128,7 +139,10 @@ def export_to_parquet(
         filepath = filepath.with_suffix('.parquet')
     
     try:
-        df.to_parquet(filepath, compression=compression, **kwargs)
+        # Fill missing values
+        df_export = df.fillna(fill_missing)
+        
+        df_export.to_parquet(filepath, compression=compression, **kwargs)
         
         # Show file size
         size_mb = filepath.stat().st_size / (1024 * 1024)
@@ -147,6 +161,7 @@ def export_to_json(
     filepath: Union[str, Path],
     orient: str = 'records',
     indent: int = 2,
+    fill_missing: Union[int, float, str] = 0,
     **kwargs
 ) -> str:
     """
@@ -157,6 +172,7 @@ def export_to_json(
         filepath: Output file path (.json)
         orient: JSON orientation ('records', 'index', 'columns', 'values', 'split')
         indent: JSON indentation (None for compact)
+        fill_missing: Value to replace NaN/missing values (default: 0)
         **kwargs: Additional pandas to_json arguments
         
     Returns:
@@ -172,7 +188,10 @@ def export_to_json(
     if filepath.suffix.lower() != '.json':
         filepath = filepath.with_suffix('.json')
     
-    df.to_json(filepath, orient=orient, indent=indent, **kwargs)
+    # Fill missing values
+    df_export = df.fillna(fill_missing)
+    
+    df_export.to_json(filepath, orient=orient, indent=indent, **kwargs)
     logger.info(f"✓ Exported to JSON: {filepath}")
     
     return str(filepath.absolute())
@@ -184,6 +203,7 @@ def export_to_hdf5(
     key: str = 'data',
     mode: str = 'w',
     complevel: int = 9,
+    fill_missing: Union[int, float, str] = 0,
     **kwargs
 ) -> str:
     """
@@ -195,6 +215,7 @@ def export_to_hdf5(
         key: Key name (if data is single DataFrame)
         mode: File mode ('w' = write, 'a' = append)
         complevel: Compression level (0-9)
+        fill_missing: Value to replace NaN/missing values (default: 0)
         **kwargs: Additional pandas to_hdf arguments
         
     Returns:
@@ -220,13 +241,15 @@ def export_to_hdf5(
         if isinstance(data, dict):
             # Multiple datasets
             for k, df in data.items():
-                df.to_hdf(filepath, key=k, mode='a' if k != list(data.keys())[0] else mode,
+                df_export = df.fillna(fill_missing)
+                df_export.to_hdf(filepath, key=k, mode='a' if k != list(data.keys())[0] else mode,
                          complevel=complevel, **kwargs)
                 logger.debug(f"  ✓ Key '{k}': {len(df)} rows")
             logger.info(f"✓ Exported {len(data)} datasets to HDF5: {filepath}")
         else:
             # Single dataset
-            data.to_hdf(filepath, key=key, mode=mode, complevel=complevel, **kwargs)
+            df_export = data.fillna(fill_missing)
+            df_export.to_hdf(filepath, key=key, mode=mode, complevel=complevel, **kwargs)
             logger.info(f"✓ Exported to HDF5: {filepath}")
             
         # Show file size
