@@ -16,7 +16,7 @@ def export_to_csv(
     df: pd.DataFrame,
     filepath: Union[str, Path],
     include_index: bool = True,
-    fill_missing: Union[int, float, str] = 0,
+    fill_method: str = 'ffill',
     **kwargs
 ) -> str:
     """
@@ -26,7 +26,7 @@ def export_to_csv(
         df: DataFrame to export
         filepath: Output file path
         include_index: Include index in CSV
-        fill_missing: Value to replace NaN/missing values (default: 0)
+        fill_method: Method to fill missing values ('ffill', 'bfill', 'zero', or numeric value)
         **kwargs: Additional pandas to_csv arguments
         
     Returns:
@@ -39,7 +39,14 @@ def export_to_csv(
     filepath.parent.mkdir(parents=True, exist_ok=True)
     
     # Fill missing values
-    df_export = df.fillna(fill_missing)
+    if fill_method == 'ffill':
+        df_export = df.ffill()
+    elif fill_method == 'bfill':
+        df_export = df.bfill()
+    elif fill_method == 'zero':
+        df_export = df.fillna(0)
+    else:
+        df_export = df.fillna(fill_method)
     
     df_export.to_csv(filepath, index=include_index, **kwargs)
     logger.info(f"✓ Exported to CSV: {filepath}")
@@ -52,7 +59,7 @@ def export_to_excel(
     filepath: Union[str, Path],
     include_index: bool = True,
     sheet_name: str = 'Sheet1',
-    fill_missing: Union[int, float, str] = 0,
+    fill_method: str = 'ffill',
     **kwargs
 ) -> str:
     """
@@ -63,7 +70,7 @@ def export_to_excel(
         filepath: Output file path (.xlsx)
         include_index: Include index in Excel
         sheet_name: Sheet name (if data is single DataFrame)
-        fill_missing: Value to replace NaN/missing values (default: 0)
+        fill_method: Method to fill missing values ('ffill', 'bfill', 'zero', or numeric value)
         **kwargs: Additional pandas to_excel arguments
         
     Returns:
@@ -86,18 +93,28 @@ def export_to_excel(
     if filepath.suffix.lower() not in ['.xlsx', '.xls']:
         filepath = filepath.with_suffix('.xlsx')
     
+    def _fill_data(df):
+        if fill_method == 'ffill':
+            return df.ffill()
+        elif fill_method == 'bfill':
+            return df.bfill()
+        elif fill_method == 'zero':
+            return df.fillna(0)
+        else:
+            return df.fillna(fill_method)
+    
     try:
         with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
             if isinstance(data, dict):
                 # Multiple sheets
                 for sheet, df in data.items():
-                    df_export = df.fillna(fill_missing)
+                    df_export = _fill_data(df)
                     df_export.to_excel(writer, sheet_name=sheet, index=include_index, **kwargs)
                     logger.debug(f"  ✓ Sheet '{sheet}': {len(df)} rows")
                 logger.info(f"✓ Exported {len(data)} sheets to Excel: {filepath}")
             else:
                 # Single sheet
-                df_export = data.fillna(fill_missing)
+                df_export = _fill_data(data)
                 df_export.to_excel(writer, sheet_name=sheet_name, index=include_index, **kwargs)
                 logger.info(f"✓ Exported to Excel: {filepath}")
     except ImportError:
@@ -112,7 +129,7 @@ def export_to_parquet(
     df: pd.DataFrame,
     filepath: Union[str, Path],
     compression: str = 'snappy',
-    fill_missing: Union[int, float, str] = 0,
+    fill_method: str = 'ffill',
     **kwargs
 ) -> str:
     """
@@ -122,7 +139,7 @@ def export_to_parquet(
         df: DataFrame to export
         filepath: Output file path (.parquet)
         compression: Compression algorithm ('snappy', 'gzip', 'brotli', 'none')
-        fill_missing: Value to replace NaN/missing values (default: 0)
+        fill_method: Method to fill missing values ('ffill', 'bfill', 'zero', or numeric value)
         **kwargs: Additional pandas to_parquet arguments
         
     Returns:
@@ -140,7 +157,14 @@ def export_to_parquet(
     
     try:
         # Fill missing values
-        df_export = df.fillna(fill_missing)
+        if fill_method == 'ffill':
+            df_export = df.ffill()
+        elif fill_method == 'bfill':
+            df_export = df.bfill()
+        elif fill_method == 'zero':
+            df_export = df.fillna(0)
+        else:
+            df_export = df.fillna(fill_method)
         
         df_export.to_parquet(filepath, compression=compression, **kwargs)
         
@@ -161,7 +185,7 @@ def export_to_json(
     filepath: Union[str, Path],
     orient: str = 'records',
     indent: int = 2,
-    fill_missing: Union[int, float, str] = 0,
+    fill_method: str = 'ffill',
     **kwargs
 ) -> str:
     """
@@ -172,7 +196,7 @@ def export_to_json(
         filepath: Output file path (.json)
         orient: JSON orientation ('records', 'index', 'columns', 'values', 'split')
         indent: JSON indentation (None for compact)
-        fill_missing: Value to replace NaN/missing values (default: 0)
+        fill_method: Method to fill missing values ('ffill', 'bfill', 'zero', or numeric value)
         **kwargs: Additional pandas to_json arguments
         
     Returns:
@@ -189,7 +213,14 @@ def export_to_json(
         filepath = filepath.with_suffix('.json')
     
     # Fill missing values
-    df_export = df.fillna(fill_missing)
+    if fill_method == 'ffill':
+        df_export = df.ffill()
+    elif fill_method == 'bfill':
+        df_export = df.bfill()
+    elif fill_method == 'zero':
+        df_export = df.fillna(0)
+    else:
+        df_export = df.fillna(fill_method)
     
     df_export.to_json(filepath, orient=orient, indent=indent, **kwargs)
     logger.info(f"✓ Exported to JSON: {filepath}")
@@ -203,7 +234,7 @@ def export_to_hdf5(
     key: str = 'data',
     mode: str = 'w',
     complevel: int = 9,
-    fill_missing: Union[int, float, str] = 0,
+    fill_method: str = 'ffill',
     **kwargs
 ) -> str:
     """
@@ -215,7 +246,7 @@ def export_to_hdf5(
         key: Key name (if data is single DataFrame)
         mode: File mode ('w' = write, 'a' = append)
         complevel: Compression level (0-9)
-        fill_missing: Value to replace NaN/missing values (default: 0)
+        fill_method: Method to fill missing values ('ffill', 'bfill', 'zero', or numeric value)
         **kwargs: Additional pandas to_hdf arguments
         
     Returns:
@@ -237,18 +268,28 @@ def export_to_hdf5(
     if filepath.suffix.lower() not in ['.h5', '.hdf5']:
         filepath = filepath.with_suffix('.h5')
     
+    def _fill_data(df):
+        if fill_method == 'ffill':
+            return df.ffill()
+        elif fill_method == 'bfill':
+            return df.bfill()
+        elif fill_method == 'zero':
+            return df.fillna(0)
+        else:
+            return df.fillna(fill_method)
+    
     try:
         if isinstance(data, dict):
             # Multiple datasets
             for k, df in data.items():
-                df_export = df.fillna(fill_missing)
+                df_export = _fill_data(df)
                 df_export.to_hdf(filepath, key=k, mode='a' if k != list(data.keys())[0] else mode,
                          complevel=complevel, **kwargs)
                 logger.debug(f"  ✓ Key '{k}': {len(df)} rows")
             logger.info(f"✓ Exported {len(data)} datasets to HDF5: {filepath}")
         else:
             # Single dataset
-            df_export = data.fillna(fill_missing)
+            df_export = _fill_data(data)
             df_export.to_hdf(filepath, key=key, mode=mode, complevel=complevel, **kwargs)
             logger.info(f"✓ Exported to HDF5: {filepath}")
             
