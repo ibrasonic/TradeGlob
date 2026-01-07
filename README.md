@@ -77,7 +77,49 @@ df_multi = fetcher.get_multiple(
 print(df_multi.head())
 ```
 
-## 📚 Examples
+## � API Reference
+
+Complete reference of all user-facing functions in TradeGlob.
+
+### Core TradeGlobFetcher Methods
+
+| Function | Description | Parameters (in order with datatypes) | Returns |
+|----------|-------------|--------------------------------------|---------|
+| **`__init__`** | Initialize the fetcher with optional authentication | 1. `username: Optional[str] = None` - TradingView username/email<br>2. `password: Optional[str] = None` - TradingView password<br>3. `auth: bool = False` - Open browser for authentication<br>4. `config: Optional[FetcherConfig] = None` - Custom configuration | `TradeGlobFetcher` instance |
+| **`authenticate`** | Authenticate with TradingView via browser (fast auto-login) | 1. `username: str = None` - TradingView username/email<br>2. `password: str = None` - TradingView password<br>3. `force_new: bool = False` - Force new login (clears cache) | `bool` - True if successful |
+| **`get_ohlcv`** | Fetch OHLCV data for a single symbol | 1. `symbol: str` - Stock symbol (e.g., 'AAPL', 'COMI')<br>2. `exchange: str` - Exchange code (e.g., 'NASDAQ', 'EGX')<br>3. `interval: str` - Time interval (see intervals below)<br>4. `n_bars: int = 100` - Number of bars to fetch (max 5000)<br>5. `use_cache: bool = True` - Use cached data if available<br>6. `validate: bool = True` - Validate data quality | `pd.DataFrame` with columns: [symbol, open, high, low, close, volume] |
+| **`get_multiple`** | Fetch data for multiple symbols with date range | 1. `stock_list: List[str]` - List of stock symbols<br>2. `exchange: str` - Exchange code<br>3. `interval: str` - Time interval<br>4. `start: date` - Start date<br>5. `end: date` - End date<br>6. `columns: Union[str, List[str]] = 'close'` - 'close', 'all', or list of columns<br>7. `parallel: bool = True` - Use parallel fetching (5x faster)<br>8. `use_cache: bool = True` - Use cached data | `pd.DataFrame` with dates as index, symbols as columns |
+| **`search_symbol`** | Search for symbols on TradingView | 1. `text: str` - Search query (e.g., 'AAPL', 'apple', 'COMI')<br>2. `exchange: str = ''` - Exchange filter (empty = all exchanges) | `List[dict]` - List of symbol info dictionaries |
+| **`export_data`** | Export DataFrame to file (CSV, Excel, Parquet, JSON, HDF5) | 1. `df: pd.DataFrame` - DataFrame to export<br>2. `filepath: str` - Output file path<br>3. `format: str = 'csv'` - Format: 'csv', 'excel', 'parquet', 'json', 'hdf5'<br>4. `**kwargs` - Format-specific arguments | `str` - Absolute path to created file |
+| **`export_multi_format`** | Export DataFrame to multiple formats simultaneously | 1. `df: pd.DataFrame` - DataFrame to export<br>2. `base_path: str` - Base path without extension<br>3. `formats: List[str] = ['csv', 'parquet']` - List of formats<br>4. `**kwargs` - Additional export arguments | `Dict[str, str]` - {format: filepath} mapping |
+| **`get_cache_info`** | Get cache statistics and information | None | `dict` - Cache stats: enabled, location, files, size_mb, oldest, newest |
+| **`clear_cache`** | Clear cached data (all or specific symbol/exchange) | 1. `symbol: Optional[str] = None` - Clear specific symbol (None = all)<br>2. `exchange: Optional[str] = None` - Clear specific exchange (None = all) | `None` |
+
+### Configuration Classes
+
+| Class | Description | Key Parameters |
+|-------|-------------|----------------|
+| **`FetcherConfig`** | Customize fetcher behavior | `retry_attempts: int = 20` - Number of retry attempts<br>`max_workers: int = 5` - Parallel workers for concurrent fetching<br>`cache_enabled: bool = True` - Enable/disable caching<br>`cache_max_age_hours: int = 24` - Cache expiration hours<br>`safety_buffer: float = 1.3` - Safety multiplier for n_bars calculation<br>`connection_timeout: int = 60` - Connection timeout in seconds<br>`log_level: str = 'ERROR'` - Logging level (DEBUG, INFO, WARNING, ERROR)<br>`progress_bar: bool = True` - Show progress for multiple symbols<br>`validate_data: bool = True` - Enable data quality checks |
+| **`MarketConfig`** | Access exchange definitions by region | `get_all_exchanges()` - Get list of all supported exchanges<br>`get_region_exchanges(region: str)` - Get exchanges for region<br>`find_exchange(exchange_code: str)` - Find region for exchange |
+
+### Valid Intervals
+
+| Category | Intervals |
+|----------|-----------|
+| **Intraday** | `'1 Minute'`, `'3 Minute'`, `'5 Minute'`, `'15 Minute'`, `'30 Minute'`, `'45 Minute'`, `'1 Hour'`, `'2 Hour'`, `'3 Hour'`, `'4 Hour'` |
+| **Daily+** | `'Daily'`, `'Weekly'`, `'Monthly'` |
+
+### Exception Classes
+
+| Exception | Description |
+|-----------|-------------|
+| `TradeGlobError` | Base exception for all TradeGlob errors |
+| `ConnectionError` | Connection to TradingView failed |
+| `NoDataError` | No data returned for requested symbol |
+| `ValidationError` | Input validation failed |
+| `AuthenticationError` | TradingView authentication failed |
+
+## �📚 Examples
 
 > **💡 Tip:** To find symbols, visit [TradingView.com](https://www.tradingview.com/) and search manually, or use common patterns like 'AAPL', 'BTCUSD', 'EURUSD'.
 
