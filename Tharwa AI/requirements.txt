@@ -1,0 +1,13 @@
+# Tharwa AI Requirements
+
+# Core dependencies
+wxPython>=4.2.0
+pandas>=1.3.0
+numpy>=1.21.0
+openpyxl>=3.0.0
+
+# AI Chat
+groq>=0.4.0
+
+# TradeGlob (install separately)
+# pip install git+https://github.com/ibrasonic/TradeGlob.git
