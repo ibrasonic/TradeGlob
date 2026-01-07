@@ -832,4 +832,176 @@ class TradeGlobFetcher:
         except Exception as e:
             logger.error(f"Symbol search error: {e}")
         
-        return symbols_list
+        return symbols_list    
+    def ta(
+        self,
+        df: Optional[pd.DataFrame] = None,
+        symbol: Optional[str] = None,
+        exchange: Optional[str] = None,
+        interval: Optional[str] = None,
+        n_bars: int = 200,
+        indicators: Union[str, List[str]] = 'common',
+        append: bool = False,
+        **kwargs
+    ) -> pd.DataFrame:
+        """
+        Calculate 130+ technical indicators on OHLCV data
+        
+        Technical Analysis powered by integrated TA engine (derived from pandas-ta).
+        Supports momentum, trend, volatility, volume, overlap, and statistical indicators.
+        
+        Args:
+            df: DataFrame with OHLCV data (if None, will fetch data)
+            symbol: Stock symbol (for auto-fetch if df is None)
+            exchange: Exchange code (for auto-fetch if df is None)
+            interval: Time interval (for auto-fetch if df is None)
+            n_bars: Number of bars to fetch (for auto-fetch)
+            indicators: Which indicators to calculate:
+                - 'common': 20 most common indicators (RSI, MACD, SMA, EMA, BB, etc.)
+                - 'all': All 130+ indicators
+                - 'momentum': All momentum indicators (RSI, MACD, Stochastic, etc.)
+                - 'trend': All trend indicators (ADX, Aroon, PSAR, etc.)
+                - 'volatility': All volatility indicators (ATR, Bollinger Bands, etc.)
+                - 'volume': All volume indicators (OBV, VWAP, MFI, etc.)
+                - 'overlap': All overlap indicators (SMA, EMA, WMA, etc.)
+                - List of specific indicators: ['RSI', 'MACD', 'SMA_20']
+            append: If True, append indicators to DataFrame; if False, return only indicators
+            **kwargs: Additional arguments for specific indicators
+            
+        Returns:
+            DataFrame with calculated indicators
+            
+        Example:
+            >>> # Auto-fetch and calculate common indicators
+            >>> df = fetcher.ta(symbol='AAPL', exchange='NASDAQ', interval='Daily', n_bars=100)
+            
+            >>> # Use existing DataFrame
+            >>> df = fetcher.get_ohlcv('AAPL', 'NASDAQ', 'Daily', 100)
+            >>> df_with_ta = fetcher.ta(df=df, indicators='common')
+            
+            >>> # Specific indicators
+            >>> df = fetcher.ta(df=df, indicators=['RSI', 'MACD', 'SMA', 'EMA'])
+            
+            >>> # All momentum indicators
+            >>> df = fetcher.ta(df=df, indicators='momentum')
+        """
+        # Auto-fetch data if DataFrame not provided
+        if df is None:
+            if symbol is None or exchange is None or interval is None:
+                raise ValidationError(
+                    "Either provide 'df' or all of: 'symbol', 'exchange', 'interval'"
+                )
+            df = self.get_ohlcv(symbol, exchange, interval, n_bars)
+        
+        # Make a copy to avoid modifying original
+        df_ta = df.copy()
+        
+        # Ensure required columns exist
+        required_cols = ['open', 'high', 'low', 'close', 'volume']
+        missing_cols = [col for col in required_cols if col not in df_ta.columns]
+        if missing_cols:
+            raise ValidationError(
+                f"DataFrame missing required columns: {missing_cols}. "
+                f"Required: {required_cols}"
+            )
+        
+        # Define common indicators
+        common_indicators = {
+            # Momentum
+            'RSI': {'length': 14},
+            'MACD': {},
+            'Stochastic': {},
+            'CCI': {},
+            'Williams %R': {},
+            
+            # Trend
+            'ADX': {},
+            'Aroon': {},
+            'PSAR': {},
+            
+            # Volatility
+            'ATR': {},
+            'BBands': {},
+            
+            # Volume
+            'OBV': {},
+            'VWAP': {},
+            
+            # Overlap (Moving Averages)
+            'SMA_20': {'length': 20},
+            'SMA_50': {'length': 50},
+            'SMA_200': {'length': 200},
+            'EMA_12': {'length': 12},
+            'EMA_26': {'length': 26},
+            'EMA_50': {'length': 50},
+        }
+        
+        try:
+            # Use pandas-ta DataFrame accessor
+            if indicators == 'common':
+                # Add common indicators
+                df_ta.ta.rsi(length=14, append=True)
+                df_ta.ta.macd(append=True)
+                df_ta.ta.stoch(append=True)
+                df_ta.ta.cci(append=True)
+                df_ta.ta.willr(append=True)
+                df_ta.ta.adx(append=True)
+                df_ta.ta.aroon(append=True)
+                df_ta.ta.psar(append=True)
+                df_ta.ta.atr(append=True)
+                df_ta.ta.bbands(append=True)
+                df_ta.ta.obv(append=True)
+                df_ta.ta.vwap(append=True)
+                df_ta.ta.sma(length=20, append=True)
+                df_ta.ta.sma(length=50, append=True)
+                df_ta.ta.sma(length=200, append=True)
+                df_ta.ta.ema(length=12, append=True)
+                df_ta.ta.ema(length=26, append=True)
+                df_ta.ta.ema(length=50, append=True)
+                
+            elif indicators == 'all':
+                # Add all indicators (may be slow)
+                df_ta.ta.strategy("all", append=True)
+                
+            elif indicators in ['momentum', 'trend', 'volatility', 'volume', 'overlap', 
+                               'statistics', 'performance', 'candle', 'cycle']:
+                # Add all indicators from a specific category
+                df_ta.ta.strategy(indicators, append=True)
+                
+            elif isinstance(indicators, list):
+                # Add specific indicators
+                for ind in indicators:
+                    ind_lower = ind.lower()
+                    
+                    # Check if it has parameters (e.g., 'SMA_20')
+                    if '_' in ind and ind.split('_')[0].lower() in ['sma', 'ema', 'wma', 'rsi']:
+                        parts = ind.split('_')
+                        func_name = parts[0].lower()
+                        length = int(parts[1])
+                        getattr(df_ta.ta, func_name)(length=length, append=True)
+                    else:
+                        # Call indicator without parameters
+                        if hasattr(df_ta.ta, ind_lower):
+                            getattr(df_ta.ta, ind_lower)(append=True, **kwargs)
+                        else:
+                            logger.warning(f"Indicator '{ind}' not found")
+            
+            else:
+                raise ValidationError(
+                    f"Invalid indicators: {indicators}. "
+                    f"Use 'common', 'all', category name, or list of indicators"
+                )
+            
+            logger.info(f"✓ Calculated technical indicators: {len(df_ta.columns) - len(df.columns)} new columns")
+            
+            # Return only indicator columns or full DataFrame
+            if not append:
+                # Return only the new indicator columns
+                indicator_cols = [col for col in df_ta.columns if col not in df.columns]
+                return df_ta[indicator_cols]
+            else:
+                return df_ta
+                
+        except Exception as e:
+            logger.error(f"Failed to calculate indicators: {e}")
+            raise TGConnectionError(f"Technical analysis failed: {e}") from e

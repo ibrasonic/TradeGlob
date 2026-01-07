@@ -12,6 +12,7 @@ Features:
 - Data quality validation
 - Progress indicators
 - Multi-market support
+- 130+ Technical Analysis indicators
 
 Author: TradeGlob Team
 Version: 1.0.0
@@ -26,6 +27,9 @@ from .utils.exceptions import (
     NoDataError,
     ValidationError
 )
+
+# Register DataFrame .ta accessor for technical analysis
+from .ta.core import AnalysisIndicators  # noqa: F401
 
 __version__ = "1.0.0"
 __all__ = [
