@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from sys import float_info as sflt
 from numpy import arctan, nan, pi, zeros_like
 from numpy.version import version as np_version

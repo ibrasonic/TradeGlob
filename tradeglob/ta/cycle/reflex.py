@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from numba import njit
 from numpy import cos, exp, nan, sqrt, zeros_like
 from pandas import Series

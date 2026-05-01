@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from warnings import simplefilter
 from numpy import array_split, mean, sum
 from pandas import DataFrame, Series, concat, cut

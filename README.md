@@ -731,7 +731,9 @@ For issues, questions, or feature requests:
 
 ## 🙏 Acknowledgments
 
-Built on top of the excellent [tvDatafeed](https://github.com/StreamAlpha/tvdatafeed) library.
+Built on top of the excellent [tvDatafeed](https://github.com/StreamAlpha/tvdatafeed) library by StreamAlpha.
+
+Includes 130+ technical indicators derived from [pandas-ta](https://github.com/twopirllc/pandas-ta) by Kevin Johnson (Copyright © 2020–2024), licensed under the MIT License. See [LICENSE_PANDAS_TA.txt](tradeglob/ta/LICENSE_PANDAS_TA.txt) for full attribution.
 
 ---
 

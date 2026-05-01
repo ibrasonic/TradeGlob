@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from numpy import cos, exp, mean, nan, pi, roll, sin, sqrt, zeros
 from pandas import Series
 from tradeglob.ta._typing import DictLike, Int

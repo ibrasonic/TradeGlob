@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from numpy import append, arange, array, exp, floor, nan, tensordot
 from numpy.version import version as np_version
 from tradeglob.ta._typing import DictLike, Int, IntFloat

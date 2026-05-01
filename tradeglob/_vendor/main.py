@@ -1,3 +1,22 @@
+# -----------------------------------------------------------------------------
+# Based on tvDatafeed by StreamAlpha
+# Original repository: https://github.com/StreamAlpha/tvdatafeed
+# Original author: StreamAlpha (https://www.buymeacoffee.com/StreamAlpha)
+#
+# NOTE: The original repository is no longer publicly available. No explicit
+# license file could be retrieved at the time of vendoring. Attribution is
+# provided here in good faith. If you are the original author and have
+# licensing requirements, please open an issue on the TradeGlob repository.
+#
+# Modifications made for TradeGlob:
+# - Smart chromedriver auto-install via chromedriver-autoinstaller
+# - Daily token caching with pickle persistence
+# - Headless Chrome performance optimizations (eager page load, reduced startup)
+# - Configurable auto_login detection with timeout and polling loop
+# - Retry logic removed from this layer (handled by TradeGlobFetcher)
+# - Logging integrated with Python standard logging module
+# -----------------------------------------------------------------------------
+
 import datetime
 import enum
 import json

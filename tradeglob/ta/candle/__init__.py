@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Derived from pandas-ta by Kevin Johnson
+# Original: https://github.com/twopirllc/pandas-ta
+# Licensed under MIT License - see LICENSE_PANDAS_TA.txt
 from .cdl_doji import cdl_doji
 from .cdl_inside import cdl_inside
 from .cdl_pattern import cdl_pattern, cdl, ALL_PATTERNS as CDL_PATTERN_NAMES
