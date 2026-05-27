@@ -54,5 +54,7 @@ Documentation = "https://github.com/ibrasonic/tradeglob/blob/main/README.md"
 Repository = "https://github.com/ibrasonic/tradeglob"
 "Bug Reports" = "https://github.com/ibrasonic/tradeglob/issues"
 
-[tool.setuptools]
-packages = ["tradeglob", "tradeglob.utils"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tradeglob*"]
+exclude = ["examples*", "tests*", "DOCS*"]
