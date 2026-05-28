@@ -106,7 +106,7 @@ class TradeGlobFetcher:
         try:
             # Only create connection if credentials provided
             if username is not None:
-                self.tv = TvDatafeedLive(username=username, password=password)
+                self.tv = TvDatafeedLive(username=username, password=password, timeout=self.config.connection_timeout)
                 
                 # Check if authentication actually succeeded
                 self.authenticated = (
@@ -124,7 +124,7 @@ class TradeGlobFetcher:
                     logger.info("✓ Initialized with authentication")
             elif auth:
                 # Browser-based authentication requested
-                self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+                self.tv = TvDatafeedLive(username=username, password=password, auto_login=False, timeout=self.config.connection_timeout)
                 
                 # Check if authentication succeeded
                 self.authenticated = (
@@ -175,7 +175,7 @@ class TradeGlobFetcher:
                     os.remove(token_file)
             
             # Create or replace connection with authenticated one
-            self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+            self.tv = TvDatafeedLive(username=username, password=password, auto_login=False, timeout=self.config.connection_timeout)
             
             # Check authentication status
             self.authenticated = (
@@ -213,7 +213,7 @@ class TradeGlobFetcher:
     def _ensure_connection(self):
         """Ensure tv connection exists (lazy initialization)"""
         if self.tv is None:
-            self.tv = TvDatafeedLive()
+            self.tv = TvDatafeedLive(timeout=self.config.connection_timeout)
             self.authenticated = False
     
     def _fetch_single(
@@ -1005,3 +1005,170 @@ class TradeGlobFetcher:
         except Exception as e:
             logger.error(f"Failed to calculate indicators: {e}")
             raise TGConnectionError(f"Technical analysis failed: {e}") from e
+
+    # ------------------------------------------------------------------
+    # Sector-based helpers
+    # ------------------------------------------------------------------
+
+    def list_sectors(self, exchange: str = 'EGX') -> List[str]:
+        """
+        List all available sectors for a given exchange.
+
+        Currently sector data is built-in for **EGX** (Egyptian Exchange).
+        For other exchanges the method returns an empty list.
+
+        Args:
+            exchange: Exchange code (default ``'EGX'``).
+
+        Returns:
+            Sorted list of sector name strings.
+
+        Example::
+
+            >>> sectors = fetcher.list_sectors('EGX')
+            >>> for s in sectors:
+            ...     print(s)
+            Banking
+            Chemicals & Petrochemicals
+            ...
+        """
+        exchange = exchange.upper()
+        if exchange == 'EGX':
+            from .markets.egx import list_egx_sectors
+            return list_egx_sectors()
+        logger.warning(f"No built-in sector data for exchange '{exchange}'")
+        return []
+
+    def get_sector_stocks(self, sector: str, exchange: str = 'EGX') -> List[str]:
+        """
+        Return the list of stock tickers for a given sector and exchange.
+
+        Args:
+            sector:   Sector name (e.g. ``"Banking"``).  Use
+                      :meth:`list_sectors` to browse available names.
+            exchange: Exchange code (default ``'EGX'``).
+
+        Returns:
+            List of ticker symbols for all stocks in the sector.
+
+        Raises:
+            KeyError:          If *sector* is not found for the exchange.
+            ValidationError:   If *exchange* has no built-in sector data.
+
+        Example::
+
+            >>> stocks = fetcher.get_sector_stocks("Banking", "EGX")
+            >>> print(stocks)
+            ['COMI', 'NSGB', 'EGAL', ...]
+        """
+        exchange = exchange.upper()
+        if exchange == 'EGX':
+            from .markets.egx import get_egx_sector_stocks
+            return get_egx_sector_stocks(sector)
+        raise ValidationError(
+            f"No built-in sector data for exchange '{exchange}'. "
+            f"Supported exchanges: EGX"
+        )
+
+    def get_sector(
+        self,
+        sector: str,
+        exchange: str = 'EGX',
+        interval: str = 'Daily',
+        start: Optional[date] = None,
+        end: Optional[date] = None,
+        n_bars: Optional[int] = None,
+        columns: Union[str, List[str]] = 'close',
+        parallel: bool = True,
+        use_cache: bool = True,
+    ) -> pd.DataFrame:
+        """
+        Fetch OHLCV data for every stock in a sector in one call.
+
+        This is a convenience wrapper around :meth:`get_multiple` that
+        automatically looks up the stock list for *sector* and passes it
+        through.  When *start* / *end* are given the optimal ``n_bars`` is
+        calculated automatically; otherwise *n_bars* defaults to ``100``.
+
+        Args:
+            sector:    Sector name (e.g. ``"Banking"``).  Use
+                       :meth:`list_sectors` to see available sectors.
+            exchange:  Exchange code (default ``'EGX'``).
+            interval:  Time interval (e.g. ``'Daily'``, ``'Weekly'``).
+            start:     Start date for the data range.  Either supply both
+                       *start* and *end*, or omit both and use *n_bars*.
+            end:       End date for the data range.
+            n_bars:    Number of bars when *start* / *end* are not given.
+                       Ignored if both *start* and *end* are provided.
+            columns:   Columns to return: ``'close'``, ``'all'``, or a list
+                       such as ``['open', 'close']``.
+            parallel:  Fetch stocks concurrently (default ``True``).
+            use_cache: Use cached data where available.
+
+        Returns:
+            DataFrame identical to :meth:`get_multiple` output – dates as
+            index, one column per stock (or MultiIndex when
+            ``columns='all'``).
+
+        Raises:
+            KeyError:        If *sector* is not found.
+            ValidationError: If *exchange* has no built-in sector data or
+                             the inputs are invalid.
+            NoDataError:     If no data could be fetched for any stock.
+
+        Example::
+
+            >>> from datetime import date
+            >>> # Get closing prices for all EGX Banking stocks
+            >>> df = fetcher.get_sector(
+            ...     "Banking", "EGX", "Daily",
+            ...     start=date(2024, 1, 1),
+            ...     end=date(2024, 12, 31),
+            ... )
+            >>> print(df.tail())
+
+            >>> # Get last 100 bars without a date range
+            >>> df = fetcher.get_sector("Real Estate & Housing", n_bars=100)
+        """
+        stock_list = self.get_sector_stocks(sector, exchange)
+        logger.info(
+            f"Fetching sector '{sector}' from {exchange}: "
+            f"{len(stock_list)} stocks"
+        )
+
+        if start is not None and end is not None:
+            return self.get_multiple(
+                stock_list=stock_list,
+                exchange=exchange,
+                interval=interval,
+                start=start,
+                end=end,
+                columns=columns,
+                parallel=parallel,
+                use_cache=use_cache,
+            )
+        else:
+            effective_n_bars = n_bars if n_bars is not None else 100
+            results = {}
+            interval_enum = self._get_interval(interval)
+            if parallel and len(stock_list) > 1:
+                results = self._fetch_parallel(
+                    stock_list, exchange, interval, effective_n_bars, columns, use_cache
+                )
+            else:
+                results = self._fetch_sequential(
+                    stock_list, exchange, interval, effective_n_bars, columns, use_cache
+                )
+            if not results:
+                raise NoDataError(
+                    f"Failed to fetch any stocks for sector '{sector}'"
+                )
+            df = pd.concat(results, axis=1)
+            df.index = pd.to_datetime(df.index)
+            df.index.name = 'Date'
+            logger.info(
+                f"\u2713 Sector '{sector}': {len(df)} rows, "
+                f"{len(df.columns)} columns"
+            )
+            return df
+
