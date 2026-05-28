@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 EGX_SECTORS: Dict[str, List[str]] = {
     "Banking": [
         "COMI",   # Commercial International Bank
-        "NSGB",   # National Société Générale Bank Egypt (now QNB)
+        "NSGB",   # National Société Générale Bank Egypt (QNB Egypt)
         "EGAL",   # Egyptian Gulf Bank
         "ADIB",   # Abu Dhabi Islamic Bank – Egypt
         "CIBD",   # Cairo Investment & Real Estate Development Bank
@@ -50,50 +50,40 @@ EGX_SECTORS: Dict[str, List[str]] = {
         "MFSD",   # Misr for Real-Estate Assets
         "IWAN",   # Iwan Developments
         "CILD",   # Cityscape Real Estate
+        "CARE",   # Pioneers Holding for Real Estate
     ],
     "Telecommunications": [
         "ETEL",   # Telecom Egypt (We)
         "RAYA",   # Raya Holding for Financial Investments
-        "AMER",   # Americana Restaurants International
     ],
     "Food & Beverages": [
-        "DOMTY",  # Cairo Three A
+        "DOMTY",  # Cairo Three A (dairy products)
         "ISPH",   # International Holding for Agricultural Investment
-        "SWDY",   # Suwedy Electric
-        "ORIE",   # Oriental Weavers
         "JUHD",   # Juhayna Food Industries
         "BADR",   # Badr El Din for Petroleum Products
         "POUL",   # Cairo Poultry Group
         "SUGAR",  # Nile Sugar
-        "SALY",   # Saleh Khairy for Investments & Real Estate
-        "EFCO",   # Egyptian Stationery Mfg.
+        "AMER",   # Americana Restaurants International
+        "SALY",   # Saleh Khairy for Investments
     ],
     "Construction & Building Materials": [
         "HELI",   # Heliopolis Housing
         "ORWE",   # Orascom Construction
-        "SKPC",   # Sidi Kerir Petrochemicals
         "USOB",   # Upper Egypt Contracting
-        "MTIE",   # Memphis Tours for Tourism & Hotels
         "ACGC",   # Arabian Cement Company
-        "CCAP",   # Citadel Capital (now Qalaa Holdings)
-        "QLAA",   # Qalaa Holdings
-        "BILT",   # Beltone Financial Holding
-        "ALXF",   # Alexandria Flour Mills
         "ACFD",   # Egyptian Expanded Polystyrene
+        "EGAS",   # Egyptian Company for Prefabricated Buildings
+        "ALXF",   # Alexandria Flour Mills
     ],
     "Healthcare & Pharmaceuticals": [
         "IBAG",   # International Pharmaceuticals – Multipharma
         "CLHO",   # Cleopatra Hospital
-        "CARE",   # Pioneers Holding for Real Estate
         "ISID",   # Integrated Diagnostics Holdings (IDH)
         "IMED",   # International Medical Center
         "ANDS",   # Andalusia Group for Medical Services
-        "EGAS",   # Egyptian Company for Prefabricated Buildings
     ],
     "Petroleum & Energy": [
         "AMOC",   # Alexandria Mineral Oils Company
-        "SKPC",   # Sidi Kerir Petrochemicals
-        "POUL",   # Cairo Poultry Group (also Food sector above)
         "ENAP",   # Egyptian Natural Gas
         "EFIC",   # Egyptian Financial & Industrial Company
     ],
@@ -106,6 +96,9 @@ EGX_SECTORS: Dict[str, List[str]] = {
         "MCQE",   # Misr Capital
         "ICON",   # Egypt Capital Holdings
         "SFCO",   # Solidere Financial Center
+        "QLAA",   # Qalaa Holdings
+        "CCAP",   # Citadel Capital
+        "BILT",   # Beltone Financial Holding
     ],
     "Insurance": [
         "ELHA",   # Al Ahli Insurance
@@ -118,24 +111,17 @@ EGX_SECTORS: Dict[str, List[str]] = {
         "MOHA",   # Mövenpick Hotel & Casino El Sokhna
         "ORAS",   # Orascom Investment Holding
         "SLLM",   # Salamlek Palace Hotel
-        "CLHO",   # Cleopatra Hotel (also Healthcare above)
+        "MTIE",   # Memphis Tours for Tourism & Hotels
     ],
     "Industrial & Manufacturing": [
         "KABO",   # Kabool
-        "EGTS",   # Egyptian Transport
         "UNIT",   # Unit (Investment & Finance)
         "CERA",   # Egyptian Iron & Steel (Ezz)
         "ESRS",   # Ezz Steel (formerly Al Ezz)
         "IRON",   # Egyptian Iron & Steel
-        "ASMN",   # Asment of Temara
         "ALCO",   # Aluminium Company of Egypt (ALCOA)
-        "SPIN",   # Spinning & Weaving (ESCO)
-        "ABUK",   # Abu Kir Fertilizers
-        "MOPCO",  # Egyptian Fertilizers Company
-    ],
-    "Media & Entertainment": [
-        "MCQE",   # Misr Capital (also Financial Services)
-        "ETMM",   # E-Finance for Digital & Financial Investments
+        "SWDY",   # Suwedy Electric
+        "EFCO",   # Egyptian Stationery Mfg.
     ],
     "Transportation & Logistics": [
         "ALCN",   # Alexandria Container & Cargo Handling
@@ -153,15 +139,13 @@ EGX_SECTORS: Dict[str, List[str]] = {
     "Textile & Garments": [
         "SIDY",   # Sidi Salem Cotton Fabric
         "NITA",   # Nile Cotton Ginning
-        "ORIE",   # Oriental Weavers (also Food sector)
+        "ORIE",   # Oriental Weavers
         "SPIN",   # Spinning & Weaving
         "GCEN",   # Ghazl El Mahalla
     ],
     "Technology": [
-        "RAYA",   # Raya Holding for Financial Investments
         "ETMM",   # E-Finance for Digital & Financial Investments
         "EFIH",   # Egyptian For Information Dissemination
-        "MCIT",   # Ministry of Communications & IT companies
     ],
 }
 
