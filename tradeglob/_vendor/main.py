@@ -137,6 +137,7 @@ class TvDatafeed:
         password=None,
         chromedriver_path=None,
         auto_login=True,
+        timeout=60,
     ) -> None:
 
         self.ws_debug = False
@@ -144,6 +145,7 @@ class TvDatafeed:
         self.chromedriver_path = chromedriver_path
         self.profile_dir = os.path.join(self.path, "chrome")
         self.token_date = None  # Will be set by __load_token() if exists
+        self.timeout = timeout
         self.__assert_dir()
 
         token = None
@@ -423,7 +425,7 @@ class TvDatafeed:
     def __create_connection(self):
         logging.debug("creating websocket connection")
         self.ws = create_connection(
-            "wss://data.tradingview.com/socket.io/websocket", headers=self.headers
+            "wss://data.tradingview.com/socket.io/websocket", headers=self.headers, timeout=self.timeout
         )
 
     @staticmethod

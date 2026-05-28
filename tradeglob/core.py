@@ -106,7 +106,7 @@ class TradeGlobFetcher:
         try:
             # Only create connection if credentials provided
             if username is not None:
-                self.tv = TvDatafeedLive(username=username, password=password)
+                self.tv = TvDatafeedLive(username=username, password=password, timeout=self.config.connection_timeout)
                 
                 # Check if authentication actually succeeded
                 self.authenticated = (
@@ -124,7 +124,7 @@ class TradeGlobFetcher:
                     logger.info("✓ Initialized with authentication")
             elif auth:
                 # Browser-based authentication requested
-                self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+                self.tv = TvDatafeedLive(username=username, password=password, auto_login=False, timeout=self.config.connection_timeout)
                 
                 # Check if authentication succeeded
                 self.authenticated = (
@@ -175,7 +175,7 @@ class TradeGlobFetcher:
                     os.remove(token_file)
             
             # Create or replace connection with authenticated one
-            self.tv = TvDatafeedLive(username=username, password=password, auto_login=False)
+            self.tv = TvDatafeedLive(username=username, password=password, auto_login=False, timeout=self.config.connection_timeout)
             
             # Check authentication status
             self.authenticated = (
@@ -213,7 +213,7 @@ class TradeGlobFetcher:
     def _ensure_connection(self):
         """Ensure tv connection exists (lazy initialization)"""
         if self.tv is None:
-            self.tv = TvDatafeedLive()
+            self.tv = TvDatafeedLive(timeout=self.config.connection_timeout)
             self.authenticated = False
     
     def _fetch_single(
