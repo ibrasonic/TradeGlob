@@ -25,7 +25,7 @@ from typing import Dict, List, Optional
 EGX_SECTORS: Dict[str, List[str]] = {
     "Banking": [
         "COMI",   # Commercial International Bank
-        "NSGB",   # National Société Générale Bank Egypt (QNB Egypt)
+        "NSGB",   # QNB Egypt (formerly National Société Générale Bank Egypt)
         "EGAL",   # Egyptian Gulf Bank
         "ADIB",   # Abu Dhabi Islamic Bank – Egypt
         "CIBD",   # Cairo Investment & Real Estate Development Bank
@@ -89,16 +89,14 @@ EGX_SECTORS: Dict[str, List[str]] = {
     ],
     "Financial Services & Investment": [
         "EFG",    # EFG Hermes Holding
-        "HRHO",   # Hermes Holding (EFG parent)
+        "HRHO",   # Hermes Holding (parent company of EFG Hermes)
         "CICH",   # Cairo Investment & Real Estate Development Bank Holding
         "ECAP",   # Egyptian Chemicals Company
-        "BLTF",   # Beltone Financial
+        "BLTF",   # Beltone Financial Holding
         "MCQE",   # Misr Capital
         "ICON",   # Egypt Capital Holdings
         "SFCO",   # Solidere Financial Center
-        "QLAA",   # Qalaa Holdings
-        "CCAP",   # Citadel Capital
-        "BILT",   # Beltone Financial Holding
+        "QLAA",   # Qalaa Holdings (formerly Citadel Capital)
     ],
     "Insurance": [
         "ELHA",   # Al Ahli Insurance
@@ -126,7 +124,6 @@ EGX_SECTORS: Dict[str, List[str]] = {
     "Transportation & Logistics": [
         "ALCN",   # Alexandria Container & Cargo Handling
         "EGTS",   # Egyptian Transport & Commercial Services
-        "AZER",   # Azertransgas (transit)
         "MPPC",   # Misr Phosphate
     ],
     "Chemicals & Petrochemicals": [

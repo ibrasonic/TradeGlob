@@ -1151,10 +1151,14 @@ class TradeGlobFetcher:
             effective_n_bars = n_bars if n_bars is not None else 100
             results = {}
             interval_enum = self._get_interval(interval)
-            fetch_method = self._fetch_parallel if parallel and len(stock_list) > 1 else self._fetch_sequential
-            results = fetch_method(
-                stock_list, exchange, interval, effective_n_bars, columns, use_cache
-            )
+            if parallel and len(stock_list) > 1:
+                results = self._fetch_parallel(
+                    stock_list, exchange, interval, effective_n_bars, columns, use_cache
+                )
+            else:
+                results = self._fetch_sequential(
+                    stock_list, exchange, interval, effective_n_bars, columns, use_cache
+                )
             if not results:
                 raise NoDataError(
                     f"Failed to fetch any stocks for sector '{sector}'"
