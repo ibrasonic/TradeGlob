@@ -27,6 +27,7 @@ from .utils.exceptions import (
     NoDataError,
     ValidationError
 )
+from .markets.egx import EGX_SECTORS, list_egx_sectors, get_egx_sector_stocks
 
 # Register DataFrame .ta accessor for technical analysis
 from .ta.core import AnalysisIndicators  # noqa: F401
@@ -39,5 +40,8 @@ __all__ = [
     'TradeGlobError',
     'ConnectionError',
     'NoDataError',
-    'ValidationError'
+    'ValidationError',
+    'EGX_SECTORS',
+    'list_egx_sectors',
+    'get_egx_sector_stocks',
 ]
